@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html>
+<!-- <html manifest="manifest.appcache"> -->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
+<!-- meta tags to hide url and minimize status bar to give the web app
+a native app look this only happens after app is saved to the desktop-->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="translucent black"
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="manifest" href="manifest.json"> 
+<link rel="apple-touch-icon-precomposed" sizes="57x57" href="images/apple-touch-icon-57x57.png" />
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="images/apple-touch-icon-114x114.png" />
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="images/apple-touch-icon-72x72.png" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="images/apple-touch-icon-144x144.png" />
+<link rel="apple-touch-icon-precomposed" sizes="60x60" href="images/apple-touch-icon-60x60.png" />
+<link rel="apple-touch-icon-precomposed" sizes="120x120" href="images/apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon-precomposed" sizes="76x76" href="images/apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon-precomposed" sizes="152x152" href="images/apple-touch-icon-152x152.png" />
+<!-- <link rel="apple-touch-startup-image" href="/startup.png"> -->
+<link rel="icon" type="image/png" href="images/favicon-196x196.png" sizes="196x196" />
+<link rel="icon" type="image/png" href="images/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/png" href="images/favicon-32x32.png" sizes="32x32" />
+<link rel="icon" type="image/png" href="images/favicon-16x16.png" sizes="16x16" />
+<link rel="icon" type="image/png" href="images/favicon-128.png" sizes="128x128" />
+<meta name="application-name" content="Mobile App Bootstrap with Offline-js"/>
+<meta name="msapplication-TileColor" content="#FFFFFF" />
+<meta name="msapplication-TileImage" content="images/mstile-144x144.png" />
+<meta name="msapplication-square70x70logo" content="images/mstile-70x70.png" />
+<meta name="msapplication-square150x150logo" content="images/mstile-150x150.png" />
+<meta name="msapplication-wide310x150logo" content="images/mstile-310x150.png" />
+<meta name="msapplication-square310x310logo" content="images/mstile-310x310.png" />
+
+<title>Mobile App Bootstrap with Offline-js</title>
+
+<head>
+ <script>
+//     // DO NOT DELETE!
+//     // Listen for application cache update events
+//     // We want to place this as early in the application life-cycle as possible!
+    window.addEventListener('load', function(evt) {
+
+        window.applicationCache.addEventListener('updateready', function(evt) {
+            if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+                // Browser downloaded a new app cache.
+                if (confirm('A new version of this cache is available.')) {
+                    window.location.reload();
+                    console.log("App cache reloaded");
+                }
+            } else {
+                // Manifest didn't changed. Nothing new to server.
+                console.log("App cache no change");
+            }
+        }, false);
+
+    }, false);
+
+    // If you need to catch AppCache errors as early as possible to troubleshoot errors.
+    // You should delete this for production use.
+   window.applicationCache.addEventListener("error",function(err){
+       console.log("ApplicationCache listener: " + err.toString());
+       if (confirm('There was a problem setting this app up for offline. Reload?')) {
+           window.location.reload();
+           console.log("App cache reloaded");
+       }
+   },false)
+ </script>
+<script>
+    var cacheStatusValues = [];
+    cacheStatusValues[0] = 'uncached';
+    cacheStatusValues[1] = 'idle';
+    cacheStatusValues[2] = 'checking';
+    cacheStatusValues[3] = 'downloading';
+    cacheStatusValues[4] = 'updateready';
+    cacheStatusValues[5] = 'obsolete';
+
+    var cache = window.applicationCache;
+    cache.addEventListener('cached', logEvent, false);
+    cache.addEventListener('checking', logEvent, false);
+    cache.addEventListener('downloading', logEvent, false);
+    cache.addEventListener('error', logEvent, false);
+    cache.addEventListener('noupdate', logEvent, false);
+    cache.addEventListener('obsolete', logEvent, false);
+    cache.addEventListener('progress', logEvent, false);
+    cache.addEventListener('updateready', logEvent, false);
+
+    function logEvent(e) {
+        var online, status, type, message;
+        online = (navigator.onLine) ? 'yes' : 'no';
+        status = cacheStatusValues[cache.status];
+        type = e.type;
+        message = 'online: ' + online;
+        message+= ', event: ' + type;
+        message+= ', status: ' + status;
+        if (type == 'error' && navigator.onLine) {
+            message+= ' (prolly a syntax error in manifest)';
+        }
+        console.log(message);
+    }
+
+    window.applicationCache.addEventListener(
+        'updateready', 
+        function(){
+            window.applicationCache.swapCache();
+            console.log('swap cache has been called');
+        }, 
+        false
+    );
+
+  setInterval(function(){cache.update()}, 10000);
+
+</script>
+  
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <!-- <link rel="stylesheet" href="http://127.0.0.1/arcgis_js_api/library/3.13/3.13compact/esri/css/esri.css"> -->
+    <link rel="stylesheet" href="http://js.arcgis.com/3.13/esri/css/esri.css">
+
+    <link rel="stylesheet" href="css/bootstrapmap.min.css">
+    <link rel="stylesheet" href="css/template-design.css">
+
+    <!--Include a reference to offline.js which detects online/offline conditions-->
+    <script src="javascript/vendor/offline.min.js"></script>
+            
+
+    <script>
+        Offline.options = {
+            checks: {
+                image: {
+                    url: function () {
+                        return 'http://esri.github.io/offline-editor-js/tiny-image.png?_' + (Math.floor(Math.random() * 1000000000));
+                    }
+                },
+                active: 'image'
+            }
+        }
+    </script>
+    
+    <script src= "http://js.arcgis.com/3.13/" data-dojo-config="packages:
+                [{name:'widgets', location:'http://52.0.185.237/Offline-Demo/javascript/widgets'},
+            {name:'utils', location:'http://52.0.185.237/Offline-Demo/javascript/utils'}], async: true"></script>
+
+
+
+    <!-- Include a reference to IndexedDBShim for library to work on Safari 7.x -->
+    <script src="javascript/vendor/IndexedDBShim.js"></script>
+  
+    <script>
+    require(["esri/tasks/query", "dojo/on", "dojo/parser", "esri/renderers/SimpleRenderer", "esri/dijit/BasemapGallery",
+     "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color", "esri/dijit/PopupTemplate",
+     "dojo/_base/array", "dojo/dom", "dojo/query", "esri/dijit/LocateButton", "esri/layers/ArcGISDynamicMapServiceLayer",
+      "esri/layers/FeatureLayer", "esri/geometry/Point", "dojo/dom-style", "dojo/dom-attr",
+     "esri/graphic", "esri/layers/GraphicsLayer", "esri/symbols/PictureMarkerSymbol", "esri/dijit/HomeButton",
+     "esri/dijit/Scalebar", "esri/layers/GeoRSSLayer", "esri/geometry/Extent", "esri/SpatialReference", "esri/layers/ImageParameters",
+     "esri/arcgis/OAuthInfo", "esri/IdentityManager", "esri/dijit/Legend", 
+     // Custom Modules
+     "javascript/utils/bootstrapmap.min.js", "utils/appCacheManager", "widgets/OfflineWidget",
+     "javascript/dist/offline-edit-src.js", "javascript/dist/offline-tiles-advanced-src.js", "dojo/domReady!"],
+    function (Query, on, parser, SimpleRenderer, BasemapGallery, SimpleMarkerSymbol, SimpleLineSymbol, Color, PopupTemplate,
+		arrayUtils, dom, query, LocateButton, ArcGISDynamicMapServiceLayer, FeatureLayer, Point, domStyle, domAttr,
+        Graphic, GraphicsLayer, PictureMarkerSymbol, HomeButton, Scalebar,
+		GeoRSSLayer, Extent, SpatialReference, ImageParameters, OAuthInfo, esriId, Legend,  BootstrapMap,
+        AppCacheManager, OfflineWidget) {
+
+            var appCacheManager;
+            initAppCacheManager();
+
+             function initAppCacheManager(){
+                appCacheManager = new AppCacheManager(true,true);
+                appCacheManager.on(appCacheManager.CACHE_EVENT,cacheEventHandler);
+                appCacheManager.on(appCacheManager.CACHE_ERROR,cacheErrorHandler);
+                appCacheManager.on(appCacheManager.CACHE_LOADED,cacheLoaderHandler);
+            }
+
+            function cacheLoaderHandler(evt){
+                if(evt == appCacheManager.CACHE_LOADED) console.log("Application cache successfully loaded!");
+            }
+
+            function cacheEventHandler(evt){
+                console.log("CACHE EVENT: " + JSON.stringify(evt));
+            }
+
+            function cacheErrorHandler(evt){
+                console.log("CACHE ERROR: " + JSON.stringify(evt));
+            }
+
+            offlineWidget = new OfflineWidget();
+            
+            offlineWidget.startup();
+            
+            //var machine = "http://192.168.0.8"
+            // var machine = "http://192.168.42.164"
+            // var machine = "http://127.0.0.1"
+            // var machine = "http://192.168.1.134";
+            var machine = "http://52.0.185.237";
+            var serverUrl = machine + "/waadmin/rest/services";
+            var mapName = "Utilities";
+            var layerIndex = "10";
+
+            var mapExtent = new Extent({
+                        xmin: -9104703.725260664,
+                        ymin: 3062031.7028226587,
+                        xmax: -9097270.224259939,
+                        ymax: 3068700.8335405313,
+                        spatialReference: {
+                            wkid: 3857
+                        }
+                    });
+
+            var map = BootstrapMap.create("mapDiv", {
+                center: [-81.755557, 26.533963],
+                zoom: 14,
+                sliderStyle: "small",
+                logo: false,
+                fadeOnZoom: true,
+                isScrollWheelZoom: true,
+                force3DTransforms: true,
+                maxZoom: 19,
+                minZoom: 14,
+                showLabels: true,
+                extent: mapExtent
+            });
+    
+            offlineWidget.map = map;
+
+
+            
+            // Testing taking a feature service offline
+            offlineWidget.testUrl = serverUrl + '/' + mapName + '/MapServer';
+            offlineWidget.startTest(offlineWidget.init(offlineWidget.initModules()));
+            
+
+            function initHomeButton() {
+                homeButton = new HomeButton({
+                    map: map,
+                    visible: true
+                }, 'homeButton');
+                homeButton.startup();
+            }
+
+            function initEsriLocate() {
+                esriLocate = new LocateButton({
+                    centerAt: true,
+                    geolocationOptions: {
+                        maximumAge: 0,
+                        timeout: 15000,
+                        enableHighAccuracy: true
+                    },
+                    highlightLocation: true,
+                    map: map,
+                    setScale: true,
+                    theme: 'LocateButton',
+                    useTracking: true,
+                    visible: true
+                }, 'esriLocate');
+            }
+
+             function initScalebar() {
+                scalebar = new Scalebar({
+                    map: map,
+                    scalebarStyle: "ruler"
+                }, dojo.byId('scalebarHousing'));
+            }
+
+            function initLegend() {
+                legend = new Legend({
+                    arrangement: 2,
+                    autoUpdate: true,
+                    map: map,
+                    respectCurrentMapScale: true
+            }, "legendDiv");
+                $('#legendHousing').on('click', function(e) {
+                    if ($('#legendDiv').css('visibility') === 'visible') {
+                        $('#legendDiv').css('visibility', 'hidden');
+                         $('#legendHousing').css('transform', 'translate(70%, 80%)');
+                    } else {
+                        $('#legendDiv').css('visibility', 'visible');
+                        $('#legendHousing').css('transform', 'translate(0%, 0%)');
+                    }
+                });
+
+                 legend.startup();
+            }
+
+             map.on('load', function(e) {
+                 initScalebar();
+                 initHomeButton();
+                 initEsriLocate();
+                 initLegend();
+            });
+        });
+      </script>
+
+
+   
+</head>
+<body>
+    <!-- Splash Page-->
+    <div id="splashPage" class="flex-container">
+        <img id="logo" src="images/logo-rsw.png" />
+    </div>
+    <!--Map Page-->
+
+    <div class="container-fluid">
+        
+        <div class="row" >
+            <div  id="navbar" class="col-xs-12">
+                <div id="homeButton"></div>
+                <div id="esriLocate"></div>
+                <input type='image' src="images/LayerBasemap32.png" class="iconButton" id="basemapButton"></input>
+            </div>
+        </div>  
+
+        <div id="main" class="row">
+            <div class="col-xs-12">
+                <div id="mapDiv">
+                    <div id='scalebarHousing'></div>
+                </div>
+                <div id="legendHousing">
+                    <span>Legend</span>
+                    <div id="legendDiv" style="visibility: hidden"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+    <script src="javascript/utils/jquery-1.11.1.js"></script>
+    <script src="javascript/utils/bootstrap.min.js"></script>
+</body>
+</html>
