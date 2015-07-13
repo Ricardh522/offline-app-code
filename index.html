@@ -174,9 +174,12 @@ a native app look this only happens after app is saved to the desktop-->
 
              function initAppCacheManager(){
                 appCacheManager = new AppCacheManager(true,true);
-                appCacheManager.on(appCacheManager.CACHE_EVENT,cacheEventHandler);
-                appCacheManager.on(appCacheManager.CACHE_ERROR,cacheErrorHandler);
-                appCacheManager.on(appCacheManager.CACHE_LOADED,cacheLoaderHandler);
+                appCacheManager.setUpdateCache();
+                appCacheManager.setCacheListeners();
+                appCacheManager.getCacheStatus();
+                // appCacheManager.on(appCacheManager.CACHE_EVENT,cacheEventHandler);
+                // appCacheManager.on(appCacheManager.CACHE_ERROR,cacheErrorHandler);
+                // appCacheManager.on(appCacheManager.CACHE_LOADED,cacheLoaderHandler);
             }
 
             function cacheLoaderHandler(evt){
