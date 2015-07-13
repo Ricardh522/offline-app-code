@@ -2,13 +2,13 @@
 
 <!-- <html> -->
 <html manifest="manifest.appcache">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
 <!-- meta tags to hide url and minimize status bar to give the web app
 a native app look this only happens after app is saved to the desktop-->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="translucent black">
-<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="mobile-web-app-capable" content="yes"/>
 
 <link rel="manifest" href="manifest.json"> 
 <link rel="apple-touch-icon-precomposed" sizes="57x57" href="images/apple-touch-icon-57x57.png" />
@@ -158,15 +158,16 @@ a native app look this only happens after app is saved to the desktop-->
       "esri/layers/FeatureLayer", "esri/geometry/Point", "dojo/dom-style", "dojo/dom-attr",
      "esri/graphic", "esri/layers/GraphicsLayer", "esri/symbols/PictureMarkerSymbol", "esri/dijit/HomeButton",
      "esri/dijit/Scalebar", "esri/layers/GeoRSSLayer", "esri/geometry/Extent", "esri/SpatialReference", "esri/layers/ImageParameters",
-     "esri/arcgis/OAuthInfo", "esri/IdentityManager", "esri/dijit/Legend", 
+     "esri/arcgis/OAuthInfo", "esri/IdentityManager", "esri/dijit/Legend", "esri/dijit/PopupMobile", "dojo/dom-construct",
+      "esri/symbols/SimpleFillSymbol",
      // Custom Modules
      "javascript/utils/bootstrapmap.min.js", "utils/appCacheManager", "widgets/OfflineWidget",
      "javascript/dist/offline-edit-src.js", "javascript/dist/offline-tiles-advanced-src.js", "dojo/domReady!"],
     function (Query, on, parser, SimpleRenderer, BasemapGallery, SimpleMarkerSymbol, SimpleLineSymbol, Color, PopupTemplate,
         arrayUtils, dom, query, LocateButton, ArcGISDynamicMapServiceLayer, FeatureLayer, Point, domStyle, domAttr,
         Graphic, GraphicsLayer, PictureMarkerSymbol, HomeButton, Scalebar,
-        GeoRSSLayer, Extent, SpatialReference, ImageParameters, OAuthInfo, esriId, Legend,  BootstrapMap,
-        AppCacheManager, OfflineWidget) {
+        GeoRSSLayer, Extent, SpatialReference, ImageParameters, OAuthInfo, esriId, Legend, PopupMobile, domConstruct,SimpleFillSymbol,
+        BootstrapMap, AppCacheManager, OfflineWidget) {
 
             var appCacheManager;
             initAppCacheManager();
@@ -219,6 +220,8 @@ a native app look this only happens after app is saved to the desktop-->
               mapExtent = localStorage.offlineMapExtent
             };
 
+            var popup = new PopupMobile(null, domConstruct.create("div", {id: "myPopup"}));
+
             var map = BootstrapMap.create("mapDiv", {
                 center: [-81.755557, 26.533963],
                 zoom: 15,
@@ -230,7 +233,9 @@ a native app look this only happens after app is saved to the desktop-->
                 maxZoom: 19,
                 minZoom: 15,
                 showLabels: true,
-                extent: mapExtent
+                extent: mapExtent,
+                smartNavigation: false,
+                infoWindow: popup
             });
     
     		    function initHomeButton() {

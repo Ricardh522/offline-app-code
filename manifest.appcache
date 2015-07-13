@@ -98,6 +98,7 @@ javascript/3.13compact/esri/symbols/SimpleMarkerSymbol.js
 javascript/3.13compact/esri/symbols/SimpleLineSymbol.js
 javascript/3.13compact/esri/symbols/SimpleFillSymbol.js
 javascript/3.13compact/esri/symbols/PictureMarkerSymbol.js
+javascript/3.13compact/esri/symbols/SimpleFillSymbol.js
 javascript/3.13compact/esri/arcgis/OAuthInfo.js
 javascript/3.13compact/esri/arcgis/utils.js
 javascript/3.13compact/esri/dijit/BasemapGallery.js
@@ -111,6 +112,7 @@ javascript/3.13compact/esri/dijit/Legend.js
 javascript/3.13compact/esri/dijit/PopupRenderer.js
 javascript/3.13compact/esri/dijit/images/home.png
 javascript/3.13compact/esri/dijit/images/locate.png
+javascript/3.13compact/esri/dijit/PopupMobile.js
 javascript/3.13compact/esri/layers/GeoRSSLayer.js
 javascript/3.13compact/esri/layers/FeatureLayer.js
 javascript/3.13compact/esri/layers/GraphicsLayer.js
@@ -173,6 +175,7 @@ javascript/3.13compact/dijit/a11yclick.js
 javascript/3.13compact/dojo/query.js
 javascript/3.13compact/dojo/_base/array.js
 javascript/3.13compact/dojo/dom.js
+javascript/3.13compact/dojo/dom-construct.js
 javascript/3.13compact/dojo/on.js
 javascript/3.13compact/dojo/NodeList-manipulate.js
 javascript/3.13compact/dojo/dom-style.js
@@ -198,6 +201,7 @@ javascript/3.13compact/dojo/dnd/Mover.js
 javascript/3.13compact/dojo/dnd/autoscroll.js
 javascript/3.13compact/dojo/html.js
 javascript/3.13compact/dojox/gfx/svg.js
+#
 #http://52.0.185.237/waadmin/rest/services/Utilities/MapServer/22?f=json
 #http://52.0.185.237/waadmin/rest/services/Utilities/MapServer?f=json
 #

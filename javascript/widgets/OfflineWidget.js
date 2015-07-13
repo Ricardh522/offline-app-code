@@ -1,9 +1,8 @@
 define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
     "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet", "esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
-"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/geometry/Point",
-  "javascript/dist/offline-edit-src.js"], function (declare, parser, ready, on,  debouncer,
+"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/geometry/Point", "javascript/dist/offline-edit-src.js"], function (declare, parser, ready, on,  debouncer,
  webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters, Extent, PopupTemplate,
- FeatureLayer, Point) { 
+ FeatureLayer, Point, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
 
      return declare("OfflineWidget", [_WidgetBase], {   
 
@@ -141,9 +140,8 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
                             };
 
                             fieldinfo.push(entry);
-                        }
+                        };
 
-                        
                         var popupTemplate = new PopupTemplate({
                             title: response.name,
                             fieldInfos: fieldinfo
@@ -153,7 +151,7 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
                         var testLayer = new FeatureLayer(url, {
                              mode: FeatureLayer.ON_DEMAND,
                              outFields: ["*"],
-                             infoTemplate: popupTemplate
+                             infoTemplate: popupTemplate,
                          });
                        
                        offlineWidget.testLayer = testLayer;

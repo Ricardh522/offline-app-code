@@ -17,7 +17,7 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on",
 
         // Set up min and max boundaries for retrieving tiles
         minZoomAdjust: -1,
-        maxZoomAdjust: 3,
+        maxZoomAdjust: 4,
         resetZoom: 15,
         _currentZoom: null,
         // Important settings for determining which tile layers gets stored for offline use.

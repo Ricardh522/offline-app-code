@@ -31,6 +31,10 @@ define(["dojo/_base/declare", "dojo/parser", "esri/geometry/Polygon", "dojo/read
                     debouncer.setOrientationListener(250,function(){
                         console.log("orientation"); orientationChange = true;
                     });
+
+                    document.body.addEventListener('touchmove', function(event) {
+                      event.preventDefault();
+                    }, false); 
                 }
             });
     });
