@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 
-<html>
-<!-- <html manifest="manifest.appcache"> -->
+<!-- <html> -->
+<html manifest="manifest.appcache">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
 <!-- meta tags to hide url and minimize status bar to give the web app
 a native app look this only happens after app is saved to the desktop-->
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="translucent black"
+<meta name="apple-mobile-web-app-status-bar-style" content="translucent black">
 <meta name="mobile-web-app-capable" content="yes">
 
 <link rel="manifest" href="manifest.json"> 
@@ -48,6 +48,7 @@ a native app look this only happens after app is saved to the desktop-->
                 if (confirm('A new version of this cache is available.')) {
                     window.location.reload();
                     console.log("App cache reloaded");
+                    window.applicationCache.swapCache();
                 }
             } else {
                 // Manifest didn't changed. Nothing new to server.
@@ -57,73 +58,75 @@ a native app look this only happens after app is saved to the desktop-->
 
     }, false);
 
-    // If you need to catch AppCache errors as early as possible to troubleshoot errors.
-    // You should delete this for production use.
-   window.applicationCache.addEventListener("error",function(err){
-       console.log("ApplicationCache listener: " + err.toString());
-       if (confirm('There was a problem setting this app up for offline. Reload?')) {
-           window.location.reload();
-           console.log("App cache reloaded");
-       }
-   },false)
+   //  // If you need to catch AppCache errors as early as possible to troubleshoot errors.
+   //  // You should delete this for production use.
+   // window.applicationCache.addEventListener("error",function(err){
+   //     console.log("ApplicationCache listener: " + err.toString());
+   //     if (confirm('There was a problem setting this app up for offline. Reload?')) {
+   //         window.location.reload();
+   //         console.log("App cache reloaded");
+   //     }
+   // },false)
  </script>
 <script>
-    var cacheStatusValues = [];
-    cacheStatusValues[0] = 'uncached';
-    cacheStatusValues[1] = 'idle';
-    cacheStatusValues[2] = 'checking';
-    cacheStatusValues[3] = 'downloading';
-    cacheStatusValues[4] = 'updateready';
-    cacheStatusValues[5] = 'obsolete';
+  //   var cacheStatusValues = [];
+  //   cacheStatusValues[0] = 'uncached';
+  //   cacheStatusValues[1] = 'idle';
+  //   cacheStatusValues[2] = 'checking';
+  //   cacheStatusValues[3] = 'downloading';
+  //   cacheStatusValues[4] = 'updateready';
+  //   cacheStatusValues[5] = 'obsolete';
 
-    var cache = window.applicationCache;
-    cache.addEventListener('cached', logEvent, false);
-    cache.addEventListener('checking', logEvent, false);
-    cache.addEventListener('downloading', logEvent, false);
-    cache.addEventListener('error', logEvent, false);
-    cache.addEventListener('noupdate', logEvent, false);
-    cache.addEventListener('obsolete', logEvent, false);
-    cache.addEventListener('progress', logEvent, false);
-    cache.addEventListener('updateready', logEvent, false);
+  //   var cache = window.applicationCache;
+  //   cache.addEventListener('cached', logEvent, false);
+  //   cache.addEventListener('checking', logEvent, false);
+  //   cache.addEventListener('downloading', logEvent, false);
+  //   cache.addEventListener('error', logEvent, false);
+  //   cache.addEventListener('noupdate', logEvent, false);
+  //   cache.addEventListener('obsolete', logEvent, false);
+  //   cache.addEventListener('progress', logEvent, false);
+  //   cache.addEventListener('updateready', logEvent, false);
 
-    function logEvent(e) {
-        var online, status, type, message;
-        online = (navigator.onLine) ? 'yes' : 'no';
-        status = cacheStatusValues[cache.status];
-        type = e.type;
-        message = 'online: ' + online;
-        message+= ', event: ' + type;
-        message+= ', status: ' + status;
-        if (type == 'error' && navigator.onLine) {
-            message+= ' (prolly a syntax error in manifest)';
-        }
-        console.log(message);
-    }
+  //   function logEvent(e) {
+  //       var online, status, type, message;
+  //       online = (navigator.onLine) ? 'yes' : 'no';
+  //       status = cacheStatusValues[cache.status];
+  //       type = e.type;
+  //       message = 'online: ' + online;
+  //       message+= ', event: ' + type;
+  //       message+= ', status: ' + status;
+  //       if (type == 'error' && navigator.onLine) {
+  //           message+= ' (prolly a syntax error in manifest)';
+  //       }
+  //       console.log(message);
+  //   }
 
-    window.applicationCache.addEventListener(
-        'updateready', 
-        function(){
-            window.applicationCache.swapCache();
-            console.log('swap cache has been called');
-        }, 
-        false
-    );
+  //   window.applicationCache.addEventListener(
+  //       'updateready', 
+  //       function(){
+  //           window.applicationCache.swapCache();
+  //           console.log('swap cache has been called');
+  //       }, 
+  //       false
+  //   );
 
-  setInterval(function(){cache.update()}, 10000);
+  
+  // setInterval(function(){cache.update()}, 10000);
 
 </script>
   
     <!-- Bootstrap core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
     <!-- <link rel="stylesheet" href="http://127.0.0.1/arcgis_js_api/library/3.13/3.13compact/esri/css/esri.css"> -->
-    <link rel="stylesheet" href="http://js.arcgis.com/3.13/esri/css/esri.css">
+    <link rel="stylesheet" href= "javascript/3.13compact/esri/css/esri.css">
 
     <link rel="stylesheet" href="css/bootstrapmap.min.css">
     <link rel="stylesheet" href="css/template-design.css">
 
     <!--Include a reference to offline.js which detects online/offline conditions-->
     <script src="javascript/vendor/offline.min.js"></script>
-            
+    <script src="javascript/utils/jquery-1.11.1.js"></script>
+    <script src="javascript/utils/bootstrap.min.js"></script>     
 
     <script>
         Offline.options = {
@@ -136,11 +139,12 @@ a native app look this only happens after app is saved to the desktop-->
                 active: 'image'
             }
         }
+
+
     </script>
     
-    <script src= "http://js.arcgis.com/3.13/" data-dojo-config="packages:
-                [{name:'widgets', location:'http://52.0.185.237/Offline-Demo/javascript/widgets'},
-            {name:'utils', location:'http://52.0.185.237/Offline-Demo/javascript/utils'}], async: true"></script>
+    <script src= "javascript/3.13compact/init.js" data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets'}, {name:'utils', location:document.URL + 'javascript/utils'}], async: true">
+    </script>
 
 
 
@@ -159,9 +163,9 @@ a native app look this only happens after app is saved to the desktop-->
      "javascript/utils/bootstrapmap.min.js", "utils/appCacheManager", "widgets/OfflineWidget",
      "javascript/dist/offline-edit-src.js", "javascript/dist/offline-tiles-advanced-src.js", "dojo/domReady!"],
     function (Query, on, parser, SimpleRenderer, BasemapGallery, SimpleMarkerSymbol, SimpleLineSymbol, Color, PopupTemplate,
-		arrayUtils, dom, query, LocateButton, ArcGISDynamicMapServiceLayer, FeatureLayer, Point, domStyle, domAttr,
+        arrayUtils, dom, query, LocateButton, ArcGISDynamicMapServiceLayer, FeatureLayer, Point, domStyle, domAttr,
         Graphic, GraphicsLayer, PictureMarkerSymbol, HomeButton, Scalebar,
-		GeoRSSLayer, Extent, SpatialReference, ImageParameters, OAuthInfo, esriId, Legend,  BootstrapMap,
+        GeoRSSLayer, Extent, SpatialReference, ImageParameters, OAuthInfo, esriId, Legend,  BootstrapMap,
         AppCacheManager, OfflineWidget) {
 
             var appCacheManager;
@@ -187,17 +191,19 @@ a native app look this only happens after app is saved to the desktop-->
             }
 
             offlineWidget = new OfflineWidget();
-            
-            offlineWidget.startup();
-            
+            var xx = offlineWidget.startup()
+           
             //var machine = "http://192.168.0.8"
             // var machine = "http://192.168.42.164"
             // var machine = "http://127.0.0.1"
             // var machine = "http://192.168.1.134";
-            var machine = "http://52.0.185.237";
-            var serverUrl = machine + "/waadmin/rest/services";
-            var mapName = "Utilities";
-            var layerIndex = "10";
+            // var machine = "http://52.0.185.237";
+            var machine = "http://52.0.46.248:6080"
+            // var serverUrl = machine + "/waadmin/rest/services";
+            var serverUrl = machine + "/arcgis/rest/services"
+            var mapName = "RSW/RSW_Utilities_MS";
+            // var mapName = "Utilities";
+            var layerIndex = "22";
 
             var mapExtent = new Extent({
                         xmin: -9104703.725260664,
@@ -209,30 +215,25 @@ a native app look this only happens after app is saved to the desktop-->
                         }
                     });
 
+            if (localStorage.offlineMapExtent !== undefined) {
+              mapExtent = localStorage.offlineMapExtent
+            };
+
             var map = BootstrapMap.create("mapDiv", {
                 center: [-81.755557, 26.533963],
-                zoom: 14,
+                zoom: 15,
                 sliderStyle: "small",
                 logo: false,
                 fadeOnZoom: true,
                 isScrollWheelZoom: true,
                 force3DTransforms: true,
                 maxZoom: 19,
-                minZoom: 14,
+                minZoom: 15,
                 showLabels: true,
                 extent: mapExtent
             });
     
-            offlineWidget.map = map;
-
-
-            
-            // Testing taking a feature service offline
-            offlineWidget.testUrl = serverUrl + '/' + mapName + '/MapServer';
-            offlineWidget.startTest(offlineWidget.init(offlineWidget.initModules()));
-            
-
-            function initHomeButton() {
+    		    function initHomeButton() {
                 homeButton = new HomeButton({
                     map: map,
                     visible: true
@@ -290,6 +291,23 @@ a native app look this only happens after app is saved to the desktop-->
                  initEsriLocate();
                  initLegend();
             });
+
+            offlineWidget.map = map;
+
+
+            // Testing taking a feature service offline
+            offlineWidget.testUrl = serverUrl + '/' + mapName + '/MapServer/' + layerIndex;
+            // offlineWidget.testUrl = serverUrl + '/' + mapName + '/MapServer';
+          
+            offlineWidget.initModules(function(result) {
+              offlineWidget.init(function(result) {
+                offlineWidget.startTest(function(result) {
+                  console.log("end of synchronous inits.")
+                });
+              });
+            });
+
+            
         });
       </script>
 
@@ -327,7 +345,6 @@ a native app look this only happens after app is saved to the desktop-->
         </div>
     </div>
     
-    <script src="javascript/utils/jquery-1.11.1.js"></script>
-    <script src="javascript/utils/bootstrap.min.js"></script>
+    
 </body>
 </html>

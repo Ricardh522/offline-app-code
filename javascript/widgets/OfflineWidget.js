@@ -1,8 +1,8 @@
 define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
     "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet", "esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
-"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/geometry/geometryEngine", "esri/layers/FeatureLayer", "esri/geometry/Point",
+"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/geometry/Point",
   "javascript/dist/offline-edit-src.js"], function (declare, parser, ready, on,  debouncer,
- webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters, Extent, PopupTemplate, geometryEngine,
+ webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters, Extent, PopupTemplate,
  FeatureLayer, Point) { 
 
      return declare("OfflineWidget", [_WidgetBase], {   
@@ -14,34 +14,38 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
              map: "",
              testUrl: "",
 
+
             startup: function() {
 
-                this.validateOnline(function(result) {
-                    if(result) {
-                        _isOnline = true;
-                        _isOffline = false;
-                        //setUIOnline();
-                       
-                    }
-                    else {
-                        _isOnline = false;
-                        _isOffline = true;
-                        //setUIOffline();
-                       
-                    }
+                var validate = function(callback) {
+                    offlineWidget.validateOnline(function(result) {
+                        if(result) {
+                            _isOnline = true;
+                            _isOffline = false;
+                            //setUIOnline();
+                           
+                        }
+                        else {
+                            _isOnline = false;
+                            _isOffline = true;
+                            //setUIOffline();
+                        }
+                        callback(true);
+                    });
                     
-                });
+                };
 
-                 // Service List widget is created with the methods needed to manage multiple map services
-                // Also included with the widget are buttons and event listeners to call the custom methods
-                Offline.check();
-                Offline.on('up down', this.updateState);
+                validate(function(e) {
+                    Offline.check();
+                });
+                
+                Offline.on('up down', offlineWidget.updateState);
 
                 //Make sure map shows up after a browser refresh
                 if(Offline.state === 'up') {
                     zoom = 18 ;
-                } else {
-                    zoom = 17;
+                } else if (localStorage.offlineZoom !== undefined) {
+                    zoom = localStorage.offlineZoom;
                 }
 
                 $('#basemapButton').on('mousedown', function(e) {
@@ -51,139 +55,144 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
                     $(this).css('transform', 'scale(1.25, 1.25)');
                     offlineWidget.downloadTiles();
                 });
-
-          
-                
+               
             },
 
-            initModules: function(){
+            initModules: function(callback){
                 (function(){
                     offlineWidget.offlineMap = new OfflineMap();
                     offlineWidget.offlineTiles = new OfflineTiles();
                     offlineWidget.offlineMap.startup();
                     offlineWidget.offlineTiles.startup();
                 })();
+                callback(true);
               
             },
 
             startTest: function(callback) {
 
-                //var clipper = new Geoprocessor("http://127.0.0.1/waadmin/rest/services/RSW_BoundaryClip/GPServer/Clip%202");
-
-                 // var imageParams = new ImageParameters();
-                 //    imageParams.bbox = new Extent({
-                 //        xmin: -9104703.725260664,
-                 //        ymin: 3062031.7028226587,
-                 //        xmax: -9097270.224259939,
-                 //        ymax: 3068700.8335405313,
-                 //        spatialReference: {
-                 //            wkid: 102659
-                 //        }
-                 //    });
-
-                //var url  = this.testUrl + "?token=" + this.token;
-                var url  = this.testUrl + '/23';
-                // var url  = this.testUrl
+                var url  = this.testUrl;
+            
                 var map = this.map;
-               // var jsonurl = url + "&f=json";
+            
                 var jsonurl = url + "?f=json";
-                var xmlhttp = new XMLHttpRequest();
-                xmlhttp.open('GET', jsonurl, false);
-                xmlhttp.send();
-                var rawresponse = xmlhttp.response;
-                var response = JSON.parse(rawresponse);
-                var err = 0;
 
-                if (response.type === "Feature Layer") {
+                var fireEvent = function(name, data) {
+                  var e = document.createEvent("Event");
+                  e.initEvent(name, true, true);
+                  e.data = data;
+                  window.dispatchEvent(e);
+                };
 
-                    // create the field info array for the feature layer
-                    var fieldinfo = [];
-                    var fields = response.fields;
-                    var count;
-                   
-                    for (count=0; count < fields.length; count ++) {
-                        
-                        var f = fields.shift();
-                        var entry = {
-                            fieldName: f.name,
-                            label: f.alias,
-                            visible: true
-                        };
+                var fetch = function(inputUrl, callback) {
 
-                        fieldinfo.push(entry);
+                    var xmlhttp = new XMLHttpRequest();
+                    var maxWaitTime = 5000;
+                    var noResponseTimer = setTimeout(function() {
+                        xmlhttp.abort();
+                        callback('failed');
+                        return
+                    }, maxWaitTime);
+                
+                    xmlhttp.onreadystatechange = function() {
+                        var status = xmlhttp.status;
+                        if (this.readyState != 4) {
+                            return
+                        } 
+
+                        if (this.readyState == 4 && this.status == 200) {
+                            fireEvent("goodconnection", {});
+                            clearTimeout(noResponseTimer);
+                            var rawresponse = xmlhttp.response;
+                            var response = JSON.parse(rawresponse);
+                            callback(response);
+                        } else {
+                            fireEvent("connectionerror", {});
+                        }
                     }
-
                     
-                    var popupTemplate = new PopupTemplate({
-                        title: response.name,
-                        fieldInfos: fieldinfo
-                    });
+                    xmlhttp.open('GET', inputUrl, false);
+                    xmlhttp.send();
 
+                }
 
-                    this.testLayer = new FeatureLayer(url, {
-                         mode: FeatureLayer.ON_DEMAND,
-                         outFields: ["*"],
-                         infoTemplate: popupTemplate
-                     });
-                   
-                   map.addLayer(this.testLayer);
-                   offlineWidget._listener = this.testLayer.on('update-end', function(e) {
+                window.addEventListener("connectionerror", function(e) {
+                  alert("There is a connection error");
+                });
 
-                        // clipper.outSpatialReference = this.testLayer.SpatialReference;
-                        // clipper.processSpatialReference = this.testLayer.SpatialReference;
+                window.addEventListener("goodconnection", function(e) {
+                  console.log("There is a good connection");
+                });
+            
+                fetch(jsonurl, function(response) {
+                     if (response.type === "Feature Layer") {
+                        // create the field info array for the feature layer
+                        var fieldinfo = [];
+                        var fields = response.fields;
+                        var count;
+                       
+                        for (count=0; count < fields.length; count ++) {
+                            
+                            var f = fields.shift();
+                            var entry = {
+                                fieldName: f.name,
+                                label: f.alias,
+                                visible: true
+                            };
+
+                            fieldinfo.push(entry);
+                        }
+
                         
-                        //  var inFeatureSet = new FeatureSet();
-                        // inFeatureSet.features = this.graphics;
+                        var popupTemplate = new PopupTemplate({
+                            title: response.name,
+                            fieldInfos: fieldinfo
+                        });
 
-                        // clipper.submitJob({
-                        //      in_features : inFeatureSet
-                        // }, completeCallback, statusCallback, errCallback);
 
-                        // function completeCallback(jobInfo) {
-                        //     console.log(jobinfo)
-                        //     clipper.getResultImagerLayer(jobInfo.job.id, "out_feature_class", imageParams, function(gpLayer) {
-                        //         map.removeLayer(offlineWidget.testLayer);
-                        //         map.addLayer(gpLayer);
-                        //         gpLayer.on('update-end', function(e) {
-                        //             //offlineWidget.initFeatureUpdateEndListener;
-                        //         });
-                        //     });
-                        // }
+                        var testLayer = new FeatureLayer(url, {
+                             mode: FeatureLayer.ON_DEMAND,
+                             outFields: ["*"],
+                             infoTemplate: popupTemplate
+                         });
+                       
+                       offlineWidget.testLayer = testLayer;
+                       map.addLayer(offlineWidget.testLayer);
+                       offlineWidget._listener = offlineWidget.testLayer.on('update-end', function(e) {
+                            if (e.error != undefined) {
+                                map.removeLayer(offlineWidget.testLayer);
+                                _isOffline = true;
+                                _isOnline = false;
+                            }
+                            
+                            offlineWidget.initFeatureUpdateEndListener();
+                        });
 
-                        // function statusCallback(jobInfo) {
-                        //     console.log(jobInfo)
-                        // }
-
-                        // function errCallback(err) {
-                        //     console.log(err)
-                        // }
-                        offlineWidget.initFeatureUpdateEndListener();
-                    });
-
-                 } else if (response.error !== undefined) {
-                    offlineWidget.offlineFeaturesManager = new O.esri.Edit.OfflineFeaturesManager();
-                    
-                     offlineWidget.loadFeatureLayerOffline(function(success) {
-                        console.log("Unable to Reach GIS Server, offline features added to map");
-                    });
-
-                 } else {
+                     } else if (response.mapName !== undefined) {
                    
-                    this.mapServiceLayer = new ArcGISDynamicMapServiceLayer(url, {
+                    offlineWidget.mapServiceLayer = new ArcGISDynamicMapServiceLayer(url, {
                         visible: false
                     });
                   
-                    map.addLayer(this.mapServiceLayer);
+                    map.addLayer(offlineWidget.mapServiceLayer);
 
-                    this.mapServiceLayer.show();
-                }
-                 
-                 
-                },
+                    offlineWidget.mapServiceLayer.show();
+
+                    } else if (response === "failed") {
+                        _isOnline = false;
+                        _isOffline = true;
+                        offlineWidget.initFeatureUpdateEndListener();
+                    } 
+                    
+                });
+                        
+
+           
+            },
 
             init: function(callback) {
-                var map = this.map;
-                var tileLayer = this.offlineTiles.tileLayer;
+                var map = offlineWidget.map;
+                var tileLayer = offlineWidget.offlineTiles.tileLayer;
                 map.addLayer(tileLayer);
 
                 map.on('layer-add-result', function() {
@@ -195,17 +204,18 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
                         mapPage.css('opacity', 1);
                         intro.css('opacity', 0);
                         intro.css('visibility', 'hidden');
+                        
                     })();
                 });
                 this.offlineMap.initEvents();
-                
+                callback(true);
              },
          //////////////////////////////////////
         ///Online Offline Methods//
        //////////////////////////////////////
             updateState: function(){
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
-                var offlineFeaturesManager = this.offlineFeaturesManager;
+                var offlineFeaturesManager = offlineWidget.offlineFeaturesManager;
 
                 if(Offline.state === 'up'){
                     //updateOfflineUsage();
@@ -220,17 +230,17 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
 
             toggleStateUp: function (state){
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
-                var offlineFeaturesManager = this.offlineFeaturesManager;
+                var offlineFeaturesManager = offlineWidget.offlineFeaturesManager;
 
                 if(state){
                     tileLayer.goOnline();
                     offlineFeaturesManager.goOnline();
-                    $("#btn-online-offline").innerHTML = "Go Offline";
+                    // $("#btn-online-offline").innerHTML = "Go Offline";
                 }
                 else{
-                    $("#btn-online-offline").innerHTML = "Go Online";
+                    // $("#btn-online-offline").innerHTML = "Go Online";
                     tileLayer.goOffline();
-                    this.offlineFeaturesManager.goOffline();
+                    offlineFeaturesManager.goOffline();
                     
                 }
             },
@@ -241,26 +251,49 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
              * @param callback
              */
             validateOnline: function(callback) {
+                var fetch = function(evt) {
                     var req = new XMLHttpRequest();
-                    req.open("GET", "http://esri.github.io/offline-editor-js/samples/images/blue-pin.png?" + (Math.floor(Math.random() * 1000000000)), true);
-                    req.onload = function() {
-                        if( req.status === 200 && req.responseText !== "") {
-                            req = null;
-                            callback(true);
+                    var maxWaitTime = 5000;
+                    var noResponseTimer = setTimeout(function() {
+                        xmlhttp.abort();
+                        callback('failed');
+                        return
+                    }, maxWaitTime);
+
+                    req.open("GET", "http://esri.github.io/offline-editor-js/samples/images/blue-pin.png?" + (Math.floor(Math.random() * 1000000000)), false);
+                    req.onreadystatechange = function() {
+                        var status = req.status;
+                        if (this.readyState != 4) {
+                            return
                         }
-                        else {
-                            console.log("verifyOffline failed");
-                            req = null;
-                            callback(false);
-                        }
-                    };
+                        if (this.readyState == 4 && this.status == 200) {
+                            
+                            clearTimeout(noResponseTimer); 
+                            
+                            req.onload = function() {
+                                req = null;
+                                x = true;
+                                callback(x);
+                                }
+                            } else {
+                                console.log("verifyOffline failed");
+                                req = null;
+                                x = false;
+                                callback(x);
+                            }
+                        };
                     req.onerror = function(e) {
                         console.log("verifyOnline failed: " + e);
                         callback(false);
                     };
+                    
                     req.send(null);
 
-                },
+                }
+
+                fetch();
+            },
+
             ////////////////////////////////////
             //Tile Layer Functions////
             ////////////////////////////////////
@@ -417,8 +450,9 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
             ///////////////////////////////////////////
 
             initFeatureUpdateEndListener: function() {
-
-                   offlineWidget._listener.remove();
+                    if (offlineWidget.hasOwnProperty("_listener")) {
+                        offlineWidget._listener.remove();
+                    };
 
                     //**************************************************
                     //
@@ -495,7 +529,7 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
                  * Load the feature while offline using information stored in database
                  */
                 loadFeatureLayerOffline: function (callback) {
-                    this.offlineFeaturesManager.getFeatureLayerJSONDataStore(function(success,dataStore) {
+                    offlineWidget.offlineFeaturesManager.getFeatureLayerJSONDataStore(function(success,dataStore) {
                         if(success){
 
 
@@ -557,14 +591,14 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
                  */
 
                  initOfflineFeaturesMgr: function(callback) {
-                    offlineWidget.offlineFeaturesManager = new O.esri.Edit.OfflineFeaturesManager();
-                    var offlineFeaturesManager = offlineWidget.offlineFeaturesManager;
+                    var offlineFeaturesManager = new O.esri.Edit.OfflineFeaturesManager();
+                   
                     // IMPORTANT!!!
                     // This tells the database which graphic.attribute property to use as a unique identifier
                     // You can look this information up in your feature service directory under the "Fields" category.
                     // Example: http://services1.arcgis.com/M8KJPUwAXP8jhtnM/arcgis/rest/services/Denver_Bus_Stops/FeatureServer/0
                     offlineFeaturesManager.DB_UID = "OID";
-                    if (_isOffline) {
+                    if (_isOffline === true) {
                         offlineFeaturesManager.ENABLE_FEATURECOLLECTION = true;
                     } else {
                         _isOnline = true;
@@ -583,6 +617,8 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
                     offlineFeaturesManager.on(offlineFeaturesManager.events.EDITS_SENT, offlineWidget.updateStatus);
                     offlineFeaturesManager.on(offlineFeaturesManager.events.ALL_EDITS_SENT, offlineWidget.updateStatus);
                     offlineFeaturesManager.on(offlineFeaturesManager.events.EDITS_SENT_ERROR, offlineWidget.editsError);
+
+                    offlineWidget.offlineFeaturesManager = offlineFeaturesManager;
                 },
 
                 extendFeatureLayer: function (online,callback){
@@ -604,7 +640,7 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
                     }
 
                     // NOTE: if app is offline then we want the dataStore object to be null
-                    this.offlineFeaturesManager.extend(testLayer,function(result, error) {
+                    offlineFeaturesManager.extend(testLayer,function(result, error) {
                         if(result) {
                             console.log("offlineFeaturesManager initialized.");
 
@@ -637,11 +673,12 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
                             alert("Unable to initialize the database. " + error);
                         }
                     }.bind(this),/* This is the optional offline configuration property */featureLayerJSON);
+                    
                 },
 
                 getFeatureLayerJSON: function () {
-                        var testLayer = this.testLayer;
-                        var map = this.map;
+                        var testLayer = offlineWidget.testLayer;
+                        var map = offlineWidget.map;
                     return {
                         "featureLayerCollection": JSON.stringify(testLayer.toJson()),
                         "zoomLevel": map.getZoom(),
@@ -651,7 +688,7 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
                 },
 
                 updateFeatureLayerJSON: function () {
-                    var testLayer = this.testLayer;
+                    var testLayer = offlineWidget.testLayer;
                     var fl = offlineWidget.getFeatureLayerJSON();
                     testLayer.setFeatureLayerJSONDataStore(fl,function(result,error){
                         console.log("updateFeatureLayerJSON - Result: " + result + ", error: " + error);
@@ -659,8 +696,8 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "utils/de
                 },
 
                 goOnline: function () {
-                    var testLayer = this.testLayer;
-                    var tileLayer = this.offlineTiles.tileLayer;
+                    var testLayer = offlineWidget.testLayer;
+                    var tileLayer = offlineWidget.offlineTiles.tileLayer;
                     console.log("Going online...");
 
                     if(testLayer && testLayer.offlineExtended) {

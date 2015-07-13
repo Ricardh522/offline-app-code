@@ -5,10 +5,10 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on",
 
         startup: function() {
             var tileLayer = O.esri.Tiles.OfflineTileEnablerLayer(
-                "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+                "http://52.0.46.248:6080/arcgis/rest/services/RSW/RSW_Airfield_TS/MapServer",
                 function (evt) {
                     console.log("Offline tile lib enabled. App is: " + Offline.state);
-                },offlineWidget._isOnline);
+                },_isOnline);
       
             tileLayer._minZoom = 14;
             tileLayer._maxZoom = 19;
@@ -54,9 +54,8 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on",
 
                     if( levelEstimation.tileCount > 0)
                     {
-                        var rowContent = [levelEstimation.level, levelEstimation.tileCount, Math.round(levelEstimation.sizeBytes / 1024 / 1024 * 100) / 100 + " Mb"];
+                       
                         console.log(rowContent);
-                        var newstring = '<tr><td>'+rowContent[0]+'</td><td>'+rowContent[1]+'</td><td>'+rowContent[2]+'</td></tr>';
                         totalMem.push(newstring);
                     }
 
@@ -65,9 +64,7 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on",
                       break;
                     }
                 }
-                totalMem.push("</table>");
-                $('#offline-usage').siblings().remove();
-                $('#offline-usage').after(totalMem);
+             
             });
         },
 
