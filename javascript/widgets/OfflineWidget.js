@@ -219,7 +219,7 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                 });
 
                 map.addLayers(layerHolder);
-                map.on('layer-add-result', function(e) {
+                map.on('layers-add-result', function(e) {
                     offlineWidget.testLayers = layerHolder;
                 });
 
@@ -231,7 +231,7 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
                 map.addLayer(tileLayer);
 
-                map.on('layer-add-result', function() {
+                map.on('layers-add-result', function() {
                     (function initSplashPage() {
                         var intro = $("#splashPage");
                         var mapPage = $(".container-fluid");
@@ -293,7 +293,7 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                     var req = new XMLHttpRequest();
                     var maxWaitTime = 5000;
                     var noResponseTimer = setTimeout(function() {
-                        xmlhttp.abort();
+                        req.abort();
                         callback('failed');
                         return
                     }, maxWaitTime);
