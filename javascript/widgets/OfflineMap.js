@@ -1,5 +1,5 @@
 define(["dojo/_base/declare", "dojo/parser", "esri/geometry/Polygon", "dojo/ready",  "dojo/on", "utils/debouncer",
-    "dijit/_WidgetBase", "javascript/dist/offline-tiles-advanced-min.js", "javascript/dist/offline-edit-min.js" ], function (declare,
+    "dijit/_WidgetBase", "javascript/dist/offline-tiles-advanced-src.js", "javascript/dist/offline-edit-src.js" ], function (declare,
     parser, Polygon, ready, on,  debouncer, _WidgetBase) { 
 
      return declare("OfflineMap", [_WidgetBase], {   

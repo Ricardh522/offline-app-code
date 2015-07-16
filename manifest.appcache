@@ -94,6 +94,10 @@ javascript/3.13compact/esri/IdentityManagerDialog.js
 javascript/3.13compact/esri/OAuthSignInHandler.js
 javascript/3.13compact/esri/ServerInfo.js
 javascript/3.13compact/esri/OAuthCredential.js
+javascript/3.13compact/esri/InfoWindowBase.js
+javascript/3.13compact/esri/PopupBase.js
+javascript/3.13compact/esri/kernel.js
+javascript/3.13compact/esri/domUtils.js
 javascript/3.13compact/esri/symbols/SimpleMarkerSymbol.js
 javascript/3.13compact/esri/symbols/SimpleLineSymbol.js
 javascript/3.13compact/esri/symbols/SimpleFillSymbol.js
@@ -113,6 +117,9 @@ javascript/3.13compact/esri/dijit/PopupRenderer.js
 javascript/3.13compact/esri/dijit/images/home.png
 javascript/3.13compact/esri/dijit/images/locate.png
 javascript/3.13compact/esri/dijit/PopupMobile.js
+javascript/3.13compact/esri/dijit/InfoView.js
+javascript/3.13compact/esri/dijit/NavigationBar.js
+javascript/3.13compact/esri/nls/jsapi.js
 javascript/3.13compact/esri/layers/GeoRSSLayer.js
 javascript/3.13compact/esri/layers/FeatureLayer.js
 javascript/3.13compact/esri/layers/GraphicsLayer.js
@@ -173,6 +180,8 @@ javascript/3.13compact/dijit/_Container.js
 javascript/3.13compact/dijit/Viewport.js
 javascript/3.13compact/dijit/a11yclick.js
 javascript/3.13compact/dojo/query.js
+javascript/3.13compact/dojo/i18n.js
+javascript/3.13compact/dojo/NodeList-dom.js
 javascript/3.13compact/dojo/_base/array.js
 javascript/3.13compact/dojo/dom.js
 javascript/3.13compact/dojo/dom-construct.js
@@ -180,6 +189,7 @@ javascript/3.13compact/dojo/on.js
 javascript/3.13compact/dojo/NodeList-manipulate.js
 javascript/3.13compact/dojo/dom-style.js
 javascript/3.13compact/dojo/dom-attr.js
+javascript/3.13compact/dojo/dom-geometry.js
 javascript/3.13compact/dojo/_base/declare.js
 javascript/3.13compact/dojo/parser.js
 javascript/3.13compact/dojo/ready.js
@@ -188,6 +198,10 @@ javascript/3.13compact/dojo/Evented.js
 javascript/3.13compact/dojo/_base/Deferred.js
 javascript/3.13compact/dojo/promise/all.js
 javascript/3.13compact/dojo/_base/lang.js
+javascript/3.13compact/dojo/_base/connect.js
+javascript/3.13compact/dojo/_base/window.js
+javascript/3.13compact/dojo/_base/kernel.js
+javascript/3.13compact/dojo/has.js
 javascript/3.13compact/dojo/touch.js
 javascript/3.13compact/dojo/dom-class.js
 javascript/3.13compact/dojo/NodeList-traverse.js
@@ -202,8 +216,6 @@ javascript/3.13compact/dojo/dnd/autoscroll.js
 javascript/3.13compact/dojo/html.js
 javascript/3.13compact/dojox/gfx/svg.js
 #
-#http://52.0.185.237/waadmin/rest/services/Utilities/MapServer/22?f=json
-#http://52.0.185.237/waadmin/rest/services/Utilities/MapServer?f=json
 #
 NETWORK:
 *

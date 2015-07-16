@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
-<!-- <html> -->
-<html manifest="manifest.appcache">
+<html>
+<!-- <html manifest="manifest.appcache"> -->
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
 <!-- meta tags to hide url and minimize status bar to give the web app
@@ -201,33 +201,47 @@ a native app look this only happens after app is saved to the desktop-->
             // var machine = "http://192.168.42.164"
             // var machine = "http://127.0.0.1"
             // var machine = "http://192.168.1.134";
-            // var machine = "http://52.0.185.237";
-            var machine = "http://52.0.46.248:6080"
-            // var serverUrl = machine + "/waadmin/rest/services";
-            var serverUrl = machine + "/arcgis/rest/services"
-            var mapName = "RSW/RSW_Utilities_MS";
-            // var mapName = "Utilities";
-            var layerIndex = "22";
+            var machine = "http://52.0.185.237";
+            // var machine = "http://52.0.46.248:6080"
+            var serverUrl = machine + "/waadmin/rest/services";
+            // var serverUrl = machine + "/arcgis/rest/services"
+            // var mapName = "RSW/RSW_Utilities_MS";
+            var mapName = "Utilities";
+            var layersIndexes = ["16", "17", "18", "19", "20", "21"];
 
-            var mapExtent = new Extent({
-                        xmin: -9104703.725260664,
-                        ymin: 3062031.7028226587,
-                        xmax: -9097270.224259939,
-                        ymax: 3068700.8335405313,
-                        spatialReference: {
-                            wkid: 3857
-                        }
-                    });
+            var storedExtent = localStorage.offlineExtent;
+            var mapExtent;
+            var centerPnt;
+            if (storedExtent  != undefined) {
+                mapExtent= new Extent(JSON.parse(storedExtent));
+                centerPnt = mapExtent.getCenter();
+              } else {
+                 mapExtent = new Extent({
+                    xmin: -9104703.725260664,
+                    ymin: 3062031.7028226587,
+                    xmax: -9097270.224259939,
+                    ymax: 3068700.8335405313,
+                    spatialReference: {
+                        wkid: 3857
+                    }
+                });
+                 centerPnt = mapExtent.getCenter();
+              };
+              
+            var zoom;
+            var storedZoom = localStorage.offlineZoom;
+            if (storedZoom  !== undefined) {
+              zoom = storedZoom;
+            } else {
+              zoom = 16
+            }
 
-            if (localStorage.offlineMapExtent !== undefined) {
-              mapExtent = localStorage.offlineMapExtent
-            };
 
             var popup = new PopupMobile(null, domConstruct.create("div", {id: "myPopup"}));
 
             var map = BootstrapMap.create("mapDiv", {
-                center: [-81.755557, 26.533963],
-                zoom: 15,
+                center: centerPnt,
+                zoom: zoom,
                 sliderStyle: "small",
                 logo: false,
                 fadeOnZoom: true,
@@ -237,7 +251,6 @@ a native app look this only happens after app is saved to the desktop-->
                 minZoom: 15,
                 showLabels: true,
                 extent: mapExtent,
-                smartNavigation: false,
                 infoWindow: popup
             });
     
@@ -303,18 +316,19 @@ a native app look this only happens after app is saved to the desktop-->
             offlineWidget.map = map;
 
 
+            offlineWidget.testUrls = [];
             // Testing taking a feature service offline
-            offlineWidget.testUrl = serverUrl + '/' + mapName + '/MapServer/' + layerIndex;
-            // offlineWidget.testUrl = serverUrl + '/' + mapName + '/MapServer';
-          
-            offlineWidget.initModules(function(result) {
-              offlineWidget.init(function(result) {
-                offlineWidget.startTest(function(result) {
-                  console.log("end of synchronous inits.")
+            arrayUtils.forEach(layersIndexes, function(item) {
+              offlineWidget.testUrls.push(serverUrl + '/' + mapName + '/MapServer/' + item);
+            });
+
+            offlineWidget.initModules(null, function(e) {
+              offlineWidget.init(null, function(e) {
+                offlineWidget.startTest(null, function(e) {
+                  console.log("OfflineWidget has been fully initialized");
                 });
               });
             });
-
             
         });
       </script>
@@ -335,7 +349,8 @@ a native app look this only happens after app is saved to the desktop-->
             <div  id="navbar" class="col-xs-12">
                 <div id="homeButton"></div>
                 <div id="esriLocate"></div>
-                <input type='image' src="images/LayerBasemap32.png" class="iconButton" id="basemapButton"></input>
+                <button type='button' id="basemapButton">Download</button>
+                <button type='button' id="clearButton">Clear</button>
             </div>
         </div>  
 
