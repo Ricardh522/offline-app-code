@@ -1,7 +1,8 @@
-define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/on", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
+define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/on", "dojo/Deferred", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
     "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet", "esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
-"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/geometry/Point", "javascript/dist/offline-edit-src.js"], function (declare,
-arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters,
+"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/geometry/Point",  "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol",
+ "esri/symbols/SimpleLineSymbol", "esri/Color", "javascript/dist/offline-edit-src.js"],
+  function (declare, arrayUtils, parser, ready, on, Deferred, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters,
  Extent, PopupTemplate, FeatureLayer, Point, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
 
      return declare("OfflineWidget", [_WidgetBase], {   
@@ -75,22 +76,42 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                             return tx.objectStore(store_name);
                           }
 
-                        var clearObjectStore = function (store_name) {
+                        
+                       function clearObjectStore() {
+                            var deferred = new Deferred();
                             var store = getObjectStore(DB_STORE_NAME, 'readwrite');
                             var req = store.clear();
                             req.onsuccess = function(evt) {
                               console.log("Store cleared");
+                              deferred.resolve("sucess");
                             };
                             req.onerror = function (evt) {
                               console.error("clearObjectStore:", evt.target.errorCode);
+                              deferred.resolve("fail");
                             };
+                            return deferred.promise
                         }
 
                         openDb(null, function(e) {
-                            db = db;
-                            clearObjectStore('features_store');
-                        });
-                    });
+                            db = e
+                            var map = offlineWidget.map;
+                            var process = clearObjectStore();
+                            process.then( function(results) {
+                                var rem = function reCreate(callback) {
+                                    offlineWidget.clearMap(function(e) {
+                                        map.graphics.clear();
+                                        callback();
+                                    });
+                                };
+                                
+                                rem(function(e) {
+                                        offlineWidget.startTest(null, function(e) {
+                                            console.log('features have been cleared from cache and re-added back into Map');
+                                        });
+                                    }); 
+                            });
+                        });  
+                });
             },
 
             initModules: function(params, callback){
@@ -183,7 +204,7 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
 
 
                         var xxx = new FeatureLayer(item, {
-                             mode: FeatureLayer.ON_DEMAND,
+                             mode: FeatureLayer.SNAPSHOT,
                              outFields: ["*"],
                              infoTemplate: popupTemplate,
                          });
@@ -221,9 +242,10 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                 map.addLayers(layerHolder);
                 map.on('layers-add-result', function(e) {
                     offlineWidget.testLayers = layerHolder;
+                    callback(true);
                 });
 
-                callback(true);
+                
             },
 
             init: function(params, callback) {
@@ -444,7 +466,7 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
 
            
 
-            clearMap: function() {
+            clearMap: function(callback) {
                 var map = this.map;
                 var graphicIds = map.graphicsLayerIds;
                 var mapIds = map.layerIds;
@@ -455,6 +477,9 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                         map.removeLayer(layer);
                     }
                 }
+                if (map.graphicsLayerIds.length === 0) {
+                    callback();
+                };
             },
 
             displayMap: function() {
@@ -513,7 +538,15 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                     // If app is online then we ONLY need to extend the feature layer.
                     if(_isOnline === true){
                         testLayers.forEach(function(value, index, array) {
-                           offlineWidget.extendFeatureLayer({online: true, inlayer: value});
+                            function commit() {
+                                offlineWidget.extendFeatureLayer({online: _isOnline, inlayer: value});
+                            }
+
+
+                            var stopper = commit();
+                            stopper.then(function(e) {
+                             console.log("The feature " + value + " was taken offline");
+                           });
                        });
                     }
                     // If the app is offline then we need to retrieve the dataStore from OfflineFeaturesManager
@@ -673,7 +706,7 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                     var name = layer.name;
                     var online = params.online
                     var offlineFeaturesManager = offlineWidget.offlineFeatureLayers[name.toString()];
-                    
+                    var myDeferred = new Deferred();
                   
                      // This sets listeners to detect if the app goes online or offline.
                     // Offline.on('up',function(e) {
@@ -683,7 +716,7 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                     //     offlineWidget.goOffline(layer)
                     // });
 
-                    if(online) {
+                    // if(online) {
 
                         // This object contains everything we need to restore the map and feature layer after an offline restart
                         //
@@ -699,20 +732,61 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                        
                          // NOTE: if app is offline then we want the dataStore object to be null
                         offlineFeaturesManager.extend(layer, function(result, error) {
-                            if(result) {
-                                console.log("offlineFeaturesManager initialized for " + layer.name);
-                                // layer.setFeatureLayerJSONDataStore(featureLayerJSON, function(e) {
-                                //     console.log(e);
-                                // });
+                            if (result) {
+                                console.log("result of true returned from extended feature layer");
+                                openDB(null, function(e) {
+                                    db = e;
+                                    var process = checkIndexKeys();
+                                    process().then(function(e) {
+                                        console.log(e);
+                                        return myDeferred.promise
+                            });
+                        });
                             }
                             else {
                                 alert("Unable to initialize the database. " + error);
                             }
 
                         }.bind(this), featureLayerJSON);
-                    }
+                // }
 
-                  
+                     var DB_NAME = 'features_store';
+                     var DB_STORE_NAME = 'features';
+                     var db;
+                     var openDB = function (params, callback) {
+                            request = indexedDB.open(DB_NAME);
+                            request.onsuccess = function(event) {
+                              db = event.target.result;
+                              callback(db);
+                            };
+                        };
+
+                    var getObjectStore = function (store_name, mode) {
+                        var tx = db.transaction(store_name, mode);
+                        return tx.objectStore(store_name);
+                      };
+
+                   
+                       function checkIndexKeys() {
+                            var deferred = new Deferred();
+                            var store = getObjectStore(DB_STORE_NAME, 'readonly');
+                            var keys = store.indexNames;
+                            var populated = false;
+                            while (populated === false) {
+                                for (i=0; i < keys.length; i +=1) {
+                                    if (keys[i] === layer.name) {
+                                        deferred.resolve("key placed in indexDB");
+                                        populated = true;
+                                        return deferred.promise
+                                    }
+                                }
+
+                                checkIndexKeys();
+                            };
+                        };
+
+                        
+                                
                     // // If the app is online then force offlineFeaturesManager to its online state
                     // // This will force the library to check for pending edits and attempt to
                     // // resend them to the Feature Service.
