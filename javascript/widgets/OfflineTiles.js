@@ -5,7 +5,8 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on",
 
         startup: function() {
             var tileLayer = O.esri.Tiles.OfflineTileEnablerLayer(
-                "http://52.0.46.248:6080/arcgis/rest/services/RSW/RSW_Airfield_TS/MapServer",
+                // "http://52.0.46.248:6080/arcgis/rest/services/RSW/RSW_Airfield_TS/MapServer",
+                "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
                 function (evt) {
                     console.log("Offline tile lib enabled. App is: " + Offline.state);
                 },_isOnline);
@@ -17,7 +18,7 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on",
 
         // Set up min and max boundaries for retrieving tiles
         minZoomAdjust: -1,
-        maxZoomAdjust: 3,
+        maxZoomAdjust: 4,
         resetZoom: 15,
         _currentZoom: null,
         // Important settings for determining which tile layers gets stored for offline use.

@@ -1,5 +1,5 @@
 define(["dojo/_base/declare", "dojo/parser", "esri/geometry/Polygon", "dojo/ready",  "dojo/on", "utils/debouncer",
-    "dijit/_WidgetBase", "javascript/dist/offline-tiles-advanced-min.js", "javascript/dist/offline-edit-min.js" ], function (declare,
+    "dijit/_WidgetBase", "javascript/dist/offline-tiles-advanced-src.js", "javascript/dist/offline-edit-src.js" ], function (declare,
     parser, Polygon, ready, on,  debouncer, _WidgetBase) { 
 
      return declare("OfflineMap", [_WidgetBase], {   
@@ -10,27 +10,26 @@ define(["dojo/_base/declare", "dojo/parser", "esri/geometry/Polygon", "dojo/read
         },
 
          initEvents: function() {
+                  
                     var map = offlineWidget.map;
-    
-                     // Keep latest extent and zoom level available in case of an offline browser restart
-                    
-                     map.on("zoom-end", function (evt) {
-                       _currentExtent = evt.extent;
-                       offlineWidget.updateLocalStorage();
-                     
-                    });
-
-                    map.on("pan-end", function (evt) {
-                        var _currentExtent = evt.extent;
+                    map.on("zoom-end",function(evt) {
+                        _currentExtent = evt.extent;
                         offlineWidget.updateLocalStorage();
+                        Offline.check();
                     });
 
-                    map.on('load', function(evt) {
+                    map.on("pan-end",function(evt) {
+                        _currentExtent = evt.extent;
+                        offlineWidget.updateLocalStorage();
+                        Offline.check();
                     });
-
                     debouncer.setOrientationListener(250,function(){
                         console.log("orientation"); orientationChange = true;
                     });
+
+                    document.body.addEventListener('touchmove', function(event) {
+                      event.preventDefault();
+                    }, false); 
                 }
             });
     });
