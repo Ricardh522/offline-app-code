@@ -52,8 +52,8 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
 
                 $('#basemapButton').on('mouseup', function(e) {
                     $(this).css('-webkit-transform', 'scale(1.25, 1.25)');
-                    offlineWidget.downloadTiles();
-                    offlineWidget.initFeatureUpdateEndListener();
+                       // offlineWidget.downloadTiles();
+                       offlineWidget.initFeatureUpdateEndListener();
                    });
 
                 $('#clearButton').on('mouseup', function(e) {
@@ -265,21 +265,23 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
 
             toggleStateUp: function (state){
                 //var tileLayer = offlineWidget.offlineTiles.tileLayer;
-                var stores = offlineWidget.offlineFeatureLayers;
-                var keys = Object.keys(stores);
-                arrayUtils.forEach(keys, function(item) {
-                     var offlineFeaturesManager = stores[item];
+                if (offlineWidget.offlineFeatureLayers !== undefined) {
+                    var stores = offlineWidget.offlineFeatureLayers;
+                    var keys = Object.keys(stores);
+                    arrayUtils.forEach(keys, function(item) {
+                    var offlineFeaturesManager = stores[item];
                     if(state){
                        tileLayer.goOnline();
                         offlineFeaturesManager.goOnline();
                         // $("#btn-online-offline").innerHTML = "Go Offline";
-                    }
-                    else{
-                        // $("#btn-online-offline").innerHTML = "Go Online";
-                       tileLayer.goOffline();
-                        offlineFeaturesManager.goOffline();
-                    }
-                });
+                        }
+                        else{
+                            // $("#btn-online-offline").innerHTML = "Go Online";
+                            tileLayer.goOffline();
+                            offlineFeaturesManager.goOffline();
+                        }
+                    });
+                } 
                 
             },
 
@@ -336,12 +338,6 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
             //Tile Layer Functions////
             ////////////////////////////////////
              
-            updateOfflineUsage: function() {
-                 {
-                    var tileLayer = this.offlineTiles.tileLayer;
-                }
-            },
-
             updateMinMaxLayerInfo: function(){
                     var map = this.map;
                     var tileLayer = this.offlineTiles.tileLayer;
@@ -381,13 +377,13 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                 var EXTENT_BUFFER = this.offlineTiles.EXTENT_BUFFER;
                 var map = this.map;
 
-                tileLayer.deleteAllTiles(function(success,err){
-                    if(success === false){
-                        alert("There was a problem deleting the tile cache");
-                    }
-                    else{
-                        console.log("success deleting tile cache");
-                        var self = this.data;
+                // tileLayer.deleteAllTiles(function(success,err){
+                //     if(success === false){
+                //         alert("There was a problem deleting the tile cache");
+                //     }
+                //     else{
+                //         console.log("success deleting tile cache");
+                //         var self = this.data;
 
                         if( offlineWidget.downloadState == 'downloading')
                         {
@@ -409,8 +405,8 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                             offlineWidget.downloadState = 'downloading';
                           
                         }
-                    }
-                }.bind(this));
+                //     }
+                // }.bind(this));
             },
 
             /**
@@ -436,9 +432,8 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                     else
                     {
                         offlineWidget.downloadState = 'downloaded';
-                      
+                        offlineWidget.initFeatureUpdateEndListener();
                         alert("Tile download complete");
-                        $('#basemapButton').attr('src', "images/LayerBasemap32.png");
                     }
 
             
@@ -509,7 +504,7 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                     //
 
                     arrayUtils.forEach(testLayers, function(item) {
-                       offlineWidget.initOfflineFeaturesMgr(function(e) {
+                       offlineWidget.initOfflineFeaturesMgr(null, function(e) {
                             var name = item.name;
                             offlineWidget.offlineFeatureLayers[name.toString()] = e;
                         });
@@ -517,17 +512,9 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
 
                     // If app is online then we ONLY need to extend the feature layer.
                     if(_isOnline === true){
-                        arrayUtils.forEach(testLayers, function(item) {
-                           offlineWidget.extendFeatureLayer({online: true, inlayer: item}, function(success) {
-                                if(success){
-                                  console.log("Initialized the feature layer " + item.name);
-                                }
-                                else{
-                                    alert("There was a problem initializing the feature  " + item.name);
-                                }
-                            });
+                        testLayers.forEach(function(value, index, array) {
+                           offlineWidget.extendFeatureLayer({online: true, inlayer: value});
                        });
-                       offlineWidget.initPanZoomListeners();
                     }
                     // If the app is offline then we need to retrieve the dataStore from OfflineFeaturesManager
                     // and then extend the feature layer using that information.
@@ -545,6 +532,7 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                             });
                         });
                     }
+                    offlineWidget.initPanZoomListeners();
 
                 },
 
@@ -559,19 +547,25 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                  * dataStore is available once a feature layer has been extended.
                  */
                 initPanZoomListeners: function () {
-                    offlineWidget.updateOfflineUsage();
-                    
-                    var map = this.map;
+                   
+                    var map = offlineWidget.map;
 
                     map.on("zoom-end",function(evt) {
                         _currentExtent = evt.extent;
-
-                        offlineWidget.updateFeatureLayerJSON();
+                        
+                        offlineWidget.updateLocalStorage();
+                        offlineWidget.validateOnline(function(e) {
+                            Offline.check();
+                        });
                     });
 
                     map.on("pan-end",function(evt) {
                         _currentExtent = evt.extent;
-                        offlineWidget.updateFeatureLayerJSON();
+                       
+                        offlineWidget.updateLocalStorage();
+                        offlineWidget.validateOnline(function(e) {
+                            Offline.check();
+                        });
                     });
                 },
 
@@ -638,56 +632,58 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                  * **********************************************
                  */
 
-                 initOfflineFeaturesMgr: function(callback) {
+                 initOfflineFeaturesMgr: function(param, callback) {
+                    
+                        var offlineFeaturesManager = new O.esri.Edit.OfflineFeaturesManager();
+                       
+                        // IMPORTANT!!!
+                        // This tells the database which graphic.attribute property to use as a unique identifier
+                        // You can look this information up in your feature service directory under the "Fields" category.
+                        // Example: http://services1.arcgis.com/M8KJPUwAXP8jhtnM/arcgis/rest/services/Denver_Bus_Stops/FeatureServer/0
+                        offlineFeaturesManager.DB_UID = "OID";
+                        if (_isOffline === true) {
+                            offlineFeaturesManager.ENABLE_FEATURECOLLECTION = true;
+                        } else {
+                            _isOnline = true;
+                            _isOffline = false;
+                            offlineFeaturesManager.ENABLE_FEATURECOLLECTION = false;
+                        }
 
-                    var offlineFeaturesManager = new O.esri.Edit.OfflineFeaturesManager();
-                   
-                    // IMPORTANT!!!
-                    // This tells the database which graphic.attribute property to use as a unique identifier
-                    // You can look this information up in your feature service directory under the "Fields" category.
-                    // Example: http://services1.arcgis.com/M8KJPUwAXP8jhtnM/arcgis/rest/services/Denver_Bus_Stops/FeatureServer/0
-                    offlineFeaturesManager.DB_UID = "OID";
-                    if (_isOffline === true) {
-                        offlineFeaturesManager.ENABLE_FEATURECOLLECTION = true;
-                    } else {
-                        _isOnline = true;
-                        _isOffline = false;
-                        offlineFeaturesManager.ENABLE_FEATURECOLLECTION = false;
-                    }
+                        // IMPORTANT!!!
+                        // A proxy page may be required to upload attachments.
+                        // If you are using a CORS enabled feature service you can ignore this.
+                        // If your feature service is not CORS-enabled then you will need to configure this.
+                        // Refer to "Using the Proxy Page" for more information:  https://developers.arcgis.com/en/javascript/jshelp/ags_proxy.html
+                        offlineFeaturesManager.proxyPath = null;
 
-                    // IMPORTANT!!!
-                    // A proxy page may be required to upload attachments.
-                    // If you are using a CORS enabled feature service you can ignore this.
-                    // If your feature service is not CORS-enabled then you will need to configure this.
-                    // Refer to "Using the Proxy Page" for more information:  https://developers.arcgis.com/en/javascript/jshelp/ags_proxy.html
-                    offlineFeaturesManager.proxyPath = null;
+                        offlineFeaturesManager.on(offlineFeaturesManager.events.EDITS_ENQUEUED, offlineWidget.updateStatus);
+                        offlineFeaturesManager.on(offlineFeaturesManager.events.EDITS_SENT, offlineWidget.updateStatus);
+                        offlineFeaturesManager.on(offlineFeaturesManager.events.ALL_EDITS_SENT, offlineWidget.updateStatus);
+                        offlineFeaturesManager.on(offlineFeaturesManager.events.EDITS_SENT_ERROR, offlineWidget.editsError);
 
-                    offlineFeaturesManager.on(offlineFeaturesManager.events.EDITS_ENQUEUED, offlineWidget.updateStatus);
-                    offlineFeaturesManager.on(offlineFeaturesManager.events.EDITS_SENT, offlineWidget.updateStatus);
-                    offlineFeaturesManager.on(offlineFeaturesManager.events.ALL_EDITS_SENT, offlineWidget.updateStatus);
-                    offlineFeaturesManager.on(offlineFeaturesManager.events.EDITS_SENT_ERROR, offlineWidget.editsError);
-
-                    offlineFeaturesManager._editStore.dbName = 'features_store';
-                    offlineFeaturesManager._editStore.objectStoreName = "features";
-                    callback(offlineFeaturesManager);
+                        offlineFeaturesManager._editStore.dbName = 'features_store';
+                        offlineFeaturesManager._editStore.objectStoreName = "features";
+                        callback(offlineFeaturesManager);
+                    
                 },
 
-                extendFeatureLayer: function (params,callback){
+                extendFeatureLayer: function (params){
                     var featureLayerJSON = null;
                     var layer = params.inlayer;
                     var name = layer.name;
+                    var online = params.online
                     var offlineFeaturesManager = offlineWidget.offlineFeatureLayers[name.toString()];
                     
                   
                      // This sets listeners to detect if the app goes online or offline.
-                    Offline.on('up',function(e) {
-                        offlineWidget.goOnline(layer)
-                    });
-                    Offline.on('down', function(e) {
-                        offlineWidget.goOffline(layer)
-                    });
+                    // Offline.on('up',function(e) {
+                    //     offlineWidget.goOnline(layer)
+                    // });
+                    // Offline.on('down', function(e) {
+                    //     offlineWidget.goOffline(layer)
+                    // });
 
-                    if(_isOnline) {
+                    if(online) {
 
                         // This object contains everything we need to restore the map and feature layer after an offline restart
                         //
@@ -698,7 +694,7 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                         // We do not want to (re)set this if are offline. We can modify it but we don't want to overwrite it.
                         offlineFeaturesManager._editStore.FEATURE_LAYER_JSON_ID = layer.name;
                         offlineFeaturesManager._editStore.FEATURE_COLLECTION_ID = layer.name + '_collection';
-                        
+                        offlineFeaturesManager._editStore._isDBInit = false;
                         featureLayerJSON = offlineWidget.getFeatureLayerJSON(layer);
                        
                          // NOTE: if app is offline then we want the dataStore object to be null
@@ -708,22 +704,19 @@ arrayUtils, parser, ready, on,  debouncer, webMercatorUtils, Geoprocessor, _Widg
                                 // layer.setFeatureLayerJSONDataStore(featureLayerJSON, function(e) {
                                 //     console.log(e);
                                 // });
-                                callback(true);
                             }
                             else {
-                                callback(false);
                                 alert("Unable to initialize the database. " + error);
                             }
 
                         }.bind(this), featureLayerJSON);
-
                     }
 
                   
                     // // If the app is online then force offlineFeaturesManager to its online state
                     // // This will force the library to check for pending edits and attempt to
                     // // resend them to the Feature Service.
-                    // if(_isOnline){
+                    // if(online){
                     //     offlineFeaturesManager.goOnline(function(result){
                     //         if(!result.success){
                     //             alert("There was a problem when attempting to go back online.");
