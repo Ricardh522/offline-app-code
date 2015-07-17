@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
-<!-- <html> -->
-<html manifest="manifest.appcache">
+<html>
+<!-- <html manifest="manifest.appcache"> -->
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
 <!-- meta tags to hide url and minimize status bar to give the web app
@@ -199,14 +199,15 @@ a native app look this only happens after app is saved to the desktop-->
            
             //var machine = "http://192.168.0.8"
             // var machine = "http://192.168.42.164"
-            // var machine = "http://127.0.0.1"
+            var machine = "http://127.0.0.1"
             // var machine = "http://192.168.1.134";
-            var machine = "http://52.0.185.237";
+            // var machine = "http://52.0.185.237";
             // var machine = "http://52.0.46.248:6080"
             var serverUrl = machine + "/waadmin/rest/services";
             // var serverUrl = machine + "/arcgis/rest/services"
             // var mapName = "RSW/RSW_Utilities_MS";
-            var mapName = "Utilities";
+            // var mapName = "Utilities";
+            var mapName = "RSW/Utilities"
             var layersIndexes = ["16", "17", "18", "19", "20", "21"];
 
             var storedExtent = localStorage.offlineExtent;
