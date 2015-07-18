@@ -1,7 +1,7 @@
 define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/on", "dojo/Deferred", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
     "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet", "esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
 "esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/geometry/Point",  "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol",
- "esri/symbols/SimpleLineSymbol", "esri/Color", "javascript/dist/offline-edit-src.js"],
+ "esri/symbols/SimpleLineSymbol", "esri/Color"],
   function (declare, arrayUtils, parser, ready, on, Deferred, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters,
  Extent, PopupTemplate, FeatureLayer, Point, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
 
@@ -13,9 +13,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
              map: "",
              testUrls: [],
             
-            startup: function(callback) {
-
-                var validate = function(callback) {
+            validate: function(callback) {
                     offlineWidget.validateOnline(function(result) {
                         if(result) {
                             _isOnline = true;
@@ -31,9 +29,11 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         callback(true);
                     });
                     
-                };
+                },
 
-                validate(function(e) {
+            startup: function(callback) {
+
+                this.validate(function(e) {
                     Offline.check();
                 });
                 
@@ -64,15 +64,30 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         var db;
 
                         var openDb = function (params, callback) {
-                            request = indexedDB.open(DB_NAME);
+                            request = indexedDB.open(DB_NAME, 11);
+                            request.onupgradeneeded = function(event) {
+                                var db = event.target.result;
+                                var store = db.createObjectStore(DB_STORE_NAME, {keyPath: 'id'});
+                                db.close();
+                            }
+
                             request.onsuccess = function(event) {
                               db = event.target.result;
                               callback(db);
                             };
+
+                            request.onerror = function() {
+                                console.log(request.error);
+                            }
                         };
 
                         var getObjectStore = function (store_name, mode) {
+                            
                             var tx = db.transaction(store_name, mode);
+                            tx.onabort = function() {
+                                console.log(tx.error);
+                                return 
+                            }
                             return tx.objectStore(store_name);
                           }
 
@@ -85,6 +100,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                               console.log("Store cleared");
                               deferred.resolve("sucess");
                             };
+
                             req.onerror = function (evt) {
                               console.error("clearObjectStore:", evt.target.errorCode);
                               deferred.resolve("fail");
@@ -98,6 +114,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                             var process = clearObjectStore();
                             process.then( function(results) {
                                 var rem = function reCreate(callback) {
+                                    db.close();
                                     offlineWidget.clearMap(function(e) {
                                         map.graphics.clear();
                                         callback();
@@ -107,6 +124,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                 rem(function(e) {
                                         offlineWidget.startTest(null, function(e) {
                                             console.log('features have been cleared from cache and re-added back into Map');
+
                                         });
                                     }); 
                             });
@@ -210,31 +228,11 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                          });
                        
                        layerHolder.push(xxx);
-                       // map.addLayer(xxx);
-                       // offlineWidget._listener = testLayer.on('update-end', function(e) {
-                       //      if (e.error != undefined) {
-                       //          map.removeLayer(offlineWidget.testLayer);
-                       //          _isOffline = true;
-                       //          _isOnline = false;
-                       //      }
-                            
-                       //      offlineWidget.initFeatureUpdateEndListener();
-                       //  });
-
-                     } else if (response.mapName !== undefined) {
-                   
-                    // offlineWidget.mapServiceLayer = new ArcGISDynamicMapServiceLayer(url, {
-                    //     visible: false
-                    // });
-                  
-                    // map.addLayer(offlineWidget.mapServiceLayer);
-
-                    // offlineWidget.mapServiceLayer.show();
+                      
 
                     } else if (response === "failed") {
                         _isOnline = false;
                         _isOffline = true;
-                        // offlineWidget.initFeatureUpdateEndListener();
                         } 
                     });
                 });
@@ -277,34 +275,30 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     if(Offline.state === 'up'){
                         //updateOfflineUsage();
                         offlineWidget.toggleStateUp(true);
-                        if(typeof tileLayer != "undefined") tileLayer.goOnline();
                     }
                     else{
                         offlineWidget.toggleStateUp(false);
-                        if(typeof tileLayer != "undefined") tileLayer.goOffline();
                     }
             },
 
             toggleStateUp: function (state){
-                //var tileLayer = offlineWidget.offlineTiles.tileLayer;
-                if (offlineWidget.offlineFeatureLayers !== undefined) {
-                    var stores = offlineWidget.offlineFeatureLayers;
-                    var keys = Object.keys(stores);
-                    arrayUtils.forEach(keys, function(item) {
-                    var offlineFeaturesManager = stores[item];
+                var tileLayer = offlineWidget.offlineTiles.tileLayer;
                     if(state){
-                       tileLayer.goOnline();
-                        offlineFeaturesManager.goOnline();
+                        tileLayer.goOnline();
+                        offlineWidget.clearMap(function(e) {
+                            offlineWidget.startTest();
+                        });
+                        
                         // $("#btn-online-offline").innerHTML = "Go Offline";
                         }
-                        else{
-                            // $("#btn-online-offline").innerHTML = "Go Online";
-                            tileLayer.goOffline();
-                            offlineFeaturesManager.goOffline();
-                        }
+                else{
+                    // $("#btn-online-offline").innerHTML = "Go Online";
+                    tileLayer.goOffline();
+                    arrayUtils.forEach(offlineWidget.testLayers, function(e) {
+                        offlineWidget. loadFeatureLayerOffline(e)
                     });
-                } 
-                
+                   
+                }
             },
 
               /**
@@ -507,9 +501,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
             ///////////////////////////////////////////
 
             initFeatureUpdateEndListener: function() {
-                offlineWidget.offlineFeatureLayers = {};
-                var testLayers = this.testLayers;
-                console.log(testLayers);
+                var layers = [];
+                var newLayers = layers.concat(this.testLayers);
+                console.log(newLayers);
                 debugger;
                     if (offlineWidget.hasOwnProperty("_listener")) {
                         offlineWidget._listener.remove();
@@ -524,35 +518,18 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     //
                     //**************************************************
 
-                    //
-                    // Extend the feature layer with offline capabilities.
-                    //
-
-                    arrayUtils.forEach(testLayers, function(item) {
-                       offlineWidget.initOfflineFeaturesMgr(null, function(e) {
-                            var name = item.name;
-                            offlineWidget.offlineFeatureLayers[name.toString()] = e;
-                        });
-                    });
-
+                   
                     // If app is online then we ONLY need to extend the feature layer.
                     if(_isOnline === true){
-                        testLayers.forEach(function(value, index, array) {
-                            function commit() {
-                                offlineWidget.extendFeatureLayer({online: _isOnline, inlayer: value});
-                            }
-
-
-                            var stopper = commit();
-                            stopper.then(function(e) {
-                             console.log("The feature " + value + " was taken offline");
-                           });
-                       });
+                         offlineWidget.buildDatabase(newLayers);
+                         offlineWidget.clearMap(function(e) {
+                            offlineWidget.startTest();
+                         })
                     }
                     // If the app is offline then we need to retrieve the dataStore from OfflineFeaturesManager
                     // and then extend the feature layer using that information.
                     else {
-                        arrayUtils.forEach(testLayers, function(item) {
+                        arrayUtils.forEach(newLayers, function(item) {
                             offlineWidget.loadFeatureLayerOffline(item, function(success) {
                                 if(success) {
                                     offlineWidget.extendFeatureLayer(_isOnline, function(success) {
@@ -587,7 +564,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         _currentExtent = evt.extent;
                         
                         offlineWidget.updateLocalStorage();
-                        offlineWidget.validateOnline(function(e) {
+                        offlineWidget.validate(function(e) {
                             Offline.check();
                         });
                     });
@@ -596,7 +573,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         _currentExtent = evt.extent;
                        
                         offlineWidget.updateLocalStorage();
-                        offlineWidget.validateOnline(function(e) {
+                         offlineWidget.validate(function(e) {
                             Offline.check();
                         });
                     });
@@ -605,9 +582,21 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                  /**
                  * Load the feature while offline using information stored in database
                  */
+
+                 getFeatureLayerJSONDataStore: function(inlayer, callback){
+                        var dataStore = offlineWidget.getFeatureLayerJSON(inlayer);
+                        var success;
+                        if (typeof dataStore === "object") {
+                            success = true
+                        } else {
+                            success = false
+                        }
+                            callback(success, dataStore);
+                    },
+
                 loadFeatureLayerOffline: function (inlayer, callback) {
-                    var offlineFeaturesManager = offlineWidget.offlineFeatureLayers[inlayer.name.toString()];
-                     offlineFeaturesManager.getFeatureLayerJSONDataStore(function(success,dataStore) {
+                    
+                     offlineWidget.getFeatureLayerJSONDataStore(function(success,dataStore) {
                         if(success){
 
                             console.log(dataStore);
@@ -661,150 +650,88 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                 /**
                  * **********************************************
-                 * FEATURE LAYER MANAGEMENT CODE
+                 * IndexedDB Code
                  * **********************************************
                  */
 
-                 initOfflineFeaturesMgr: function(param, callback) {
-                    
-                        var offlineFeaturesManager = new O.esri.Edit.OfflineFeaturesManager();
-                       
-                        // IMPORTANT!!!
-                        // This tells the database which graphic.attribute property to use as a unique identifier
-                        // You can look this information up in your feature service directory under the "Fields" category.
-                        // Example: http://services1.arcgis.com/M8KJPUwAXP8jhtnM/arcgis/rest/services/Denver_Bus_Stops/FeatureServer/0
-                        offlineFeaturesManager.DB_UID = "OID";
-                        if (_isOffline === true) {
-                            offlineFeaturesManager.ENABLE_FEATURECOLLECTION = true;
-                        } else {
-                            _isOnline = true;
-                            _isOffline = false;
-                            offlineFeaturesManager.ENABLE_FEATURECOLLECTION = false;
+
+                buildDatabase: function (params){
+
+                    // params should be an object of {json: layer}
+                    offlineWidget.editStore = {};
+                    var editStore = offlineWidget.editStore;
+                    editStore.DB_NAME =  "features_store";   
+                    editStore.DB_OBJECTSTORE_NAME =  "features";
+                    editStore.DB_UID =  "objectid"    
+                    editStore._isDBInit = false;
+                    editStore._featureLayers = [];
+                    var db;
+
+                    // Initialize the database as well as set offline data.
+                    function initDB(callback) {
+                        if(!editStore._isDBInit) {
+                            var deferred = new Deferred();
+                            var request = indexedDB.open(editStore.DB_NAME);
+                            request.onupgradeneeded = function() {
+                                var db = request.result;
+                                var store = db.createObjectStore(editStore.DB_OBJECTSTORE_NAME, {keyPath: "id"});
+                                db.close();
+                                callback();
+                            }
+
+                             request.onsuccess = function() {
+                                db = request.result
+                                callback(db);
+                            }
                         }
-
-                        // IMPORTANT!!!
-                        // A proxy page may be required to upload attachments.
-                        // If you are using a CORS enabled feature service you can ignore this.
-                        // If your feature service is not CORS-enabled then you will need to configure this.
-                        // Refer to "Using the Proxy Page" for more information:  https://developers.arcgis.com/en/javascript/jshelp/ags_proxy.html
-                        offlineFeaturesManager.proxyPath = null;
-
-                        offlineFeaturesManager.on(offlineFeaturesManager.events.EDITS_ENQUEUED, offlineWidget.updateStatus);
-                        offlineFeaturesManager.on(offlineFeaturesManager.events.EDITS_SENT, offlineWidget.updateStatus);
-                        offlineFeaturesManager.on(offlineFeaturesManager.events.ALL_EDITS_SENT, offlineWidget.updateStatus);
-                        offlineFeaturesManager.on(offlineFeaturesManager.events.EDITS_SENT_ERROR, offlineWidget.editsError);
-
-                        offlineFeaturesManager._editStore.dbName = 'features_store';
-                        offlineFeaturesManager._editStore.objectStoreName = "features";
-                        callback(offlineFeaturesManager);
-                    
-                },
-
-                extendFeatureLayer: function (params){
-                    var featureLayerJSON = null;
-                    var layer = params.inlayer;
-                    var name = layer.name;
-                    var online = params.online
-                    var offlineFeaturesManager = offlineWidget.offlineFeatureLayers[name.toString()];
-                    var myDeferred = new Deferred();
-                  
-                     // This sets listeners to detect if the app goes online or offline.
-                    // Offline.on('up',function(e) {
-                    //     offlineWidget.goOnline(layer)
-                    // });
-                    // Offline.on('down', function(e) {
-                    //     offlineWidget.goOffline(layer)
-                    // });
-
-                    // if(online) {
-
-                        // This object contains everything we need to restore the map and feature layer after an offline restart
-                        //
-                        // There are two caveats:
-                        // First, you cannot use the object key 'id'. That's a reserved key for internal offline library use.
-                        // Second, complex objects need to be serialized or you'll get a database cloning error.
-                        //
-                        // We do not want to (re)set this if are offline. We can modify it but we don't want to overwrite it.
-                        offlineFeaturesManager._editStore.FEATURE_LAYER_JSON_ID = layer.name;
-                        offlineFeaturesManager._editStore.FEATURE_COLLECTION_ID = layer.name + '_collection';
-                        offlineFeaturesManager._editStore._isDBInit = false;
-                        featureLayerJSON = offlineWidget.getFeatureLayerJSON(layer);
-                       
-                         // NOTE: if app is offline then we want the dataStore object to be null
-                        offlineFeaturesManager.extend(layer, function(result, error) {
-                            if (result) {
-                                console.log("result of true returned from extended feature layer");
-                                openDB(null, function(e) {
-                                    db = e;
-                                    var process = checkIndexKeys();
-                                    process().then(function(e) {
-                                        console.log(e);
-                                        return myDeferred.promise
-                            });
-                        });
-                            }
-                            else {
-                                alert("Unable to initialize the database. " + error);
-                            }
-
-                        }.bind(this), featureLayerJSON);
-                // }
-
-                     var DB_NAME = 'features_store';
-                     var DB_STORE_NAME = 'features';
-                     var db;
-                     var openDB = function (params, callback) {
-                            request = indexedDB.open(DB_NAME);
-                            request.onsuccess = function(event) {
-                              db = event.target.result;
-                              callback(db);
-                            };
-                        };
-
-                    var getObjectStore = function (store_name, mode) {
-                        var tx = db.transaction(store_name, mode);
-                        return tx.objectStore(store_name);
-                      };
+                    }
 
                    
-                       function checkIndexKeys() {
-                            var deferred = new Deferred();
-                            var store = getObjectStore(DB_STORE_NAME, 'readonly');
-                            var keys = store.indexNames;
-                            var populated = false;
-                            while (populated === false) {
-                                for (i=0; i < keys.length; i +=1) {
-                                    if (keys[i] === layer.name) {
-                                        deferred.resolve("key placed in indexDB");
-                                        populated = true;
-                                        return deferred.promise
-                                    }
-                                }
+                    initDB(function(e) {
+                        db = e;
+                        var tx = db.transaction(editStore.DB_OBJECTSTORE_NAME, 'readwrite');
+                        var store = tx.objectStore(editStore.DB_OBJECTSTORE_NAME);
+                  
+                        arrayUtils.forEach(params, function(e) {
+                            store.put(entry(e));
+                        });
 
-                                checkIndexKeys();
-                            };
-                        };
+                        tx.oncomplete = function() {
+                            console.log('all requests have succedded');
+                            db.close();
+                            return
+                        }
 
-                        
-                                
-                    // // If the app is online then force offlineFeaturesManager to its online state
-                    // // This will force the library to check for pending edits and attempt to
-                    // // resend them to the Feature Service.
-                    // if(online){
-                    //     offlineFeaturesManager.goOnline(function(result){
-                    //         if(!result.success){
-                    //             alert("There was a problem when attempting to go back online.");
-                    //         }
-                    //         else {
-                    //             offlineWidget.updateStatus();
-                    //         }
-                    //     });
-                    // }
-                    // else {
-                    //     offlineWidget.offlineFeaturesManager.goOffline();
-                    //     offlineWidget.updateStatus();
-                    // }
+                        tx.onabort = function() {
+                            console.log(tx.error);
+                            return 
+                        }
+                    });
                     
+                    var entry = function (layer) {
+                        var featureLayerJSON = null;
+                        var dataStore = featureLayerJSON = offlineWidget.getFeatureLayerJSON(layer);
+
+                        var name = layer.name;
+                         dataStore.id = layer.name;
+
+                         var FEATURE_COLLECTION_ID = layer.name + '_collection';
+                     
+                          layer.offlineExtended = true; // to identify layer has been extended
+
+                          layer.objectIdField = editStore.DB_UID;
+
+                          var url = null;
+
+                          if(layer.url) {
+                                url = layer.url;
+                                // we keep track of the FeatureLayer object
+                                editStore._featureLayers[layer.url] = layer;
+                          } 
+
+                          return dataStore
+                    }
+
                 },
 
                 getFeatureLayerJSON: function (item) {
@@ -820,57 +747,14 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                 updateFeatureLayerJSON: function () {
 
-                        var testLayer =  offlineWidget.testLayers;
-                        arrayUtils.forEach(testLayer, function(item) {
+                        var testLayers =  offlineWidget.testLayers;
+                        arrayUtils.forEach(testLayers, function(item) {
                              var fl = offlineWidget.getFeatureLayerJSON(item);
                             item.setFeatureLayerJSONDataStore(fl,function(result,error){
                             console.log("updateFeatureLayerJSON - Result: " + result + ", error: " + error);
                             });
                         });
                        
-                },
-                
-
-                goOnline: function (inlayer) {
-                    var testLayer = inlayer;
-                    var name = testLayer.name
-                    var offlineFeaturesManager = offlineWidget.offlineFeatureLayers[name.toString()];
-                    var tileLayer = offlineWidget.offlineTiles.tileLayer;
-                    console.log("Going online...");
-
-                    // if(testLayer && testLayer.offlineExtended) {
-
-                    // }
-
-                    offlineFeaturesManager.goOnline(function(success,error) {
-                        if(success) {
-                            console.log("offlineFeatureManager is online.");
-                        }
-                        else {
-                            alert("There was a problem syncing offline edits: " + JSON.stringify(error));
-                        }
-
-                    });
-
-                    offlineWidget.updateOfflineUsage();
-                    if(typeof tileLayer != "undefined") tileLayer.goOnline();
-                },
-
-                 /**
-                 * Forces offlineFeaturesManager offline
-                 */
-                 goOffline: function(inlayer) {
-                    var tileLayer = offlineWidget.offlineTiles.tileLayer;
-                    var testLayer = inlayer;
-                    var name = testLayer.name;
-                    var offlineFeaturesManager = offlineWidget.offlineFeatureLayers[name.toString()];
-
-                    console.log("Going offline...");
-                    
-                    offlineFeaturesManager.goOffline();
-                    if(typeof tileLayer != "undefined") tileLayer.goOffline();
                 }
-
-
         });
 });
