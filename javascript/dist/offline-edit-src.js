@@ -513,7 +513,7 @@ define([
                             success === true ? self.emit(self.events.EDITS_ENQUEUED, results) : self.emit(self.events.EDITS_ENQUEUED_ERROR, results);
                         }.bind(this));
 
-                        return deferred1;
+                        return deferred;
 
                     }; // layer.applyEdits()
  
@@ -2212,6 +2212,7 @@ O.esri.Edit.EditStore = function () {
                 var updateFeatureLayerDataRequest = objectStore.put(result);
 
                 updateFeatureLayerDataRequest.onsuccess = function () {
+                    db.close();
                     callback(true, null);
                 };
 
@@ -2224,6 +2225,7 @@ O.esri.Edit.EditStore = function () {
                 var transaction = db.transaction([this.objectStoreName], "readwrite");
 
                 transaction.oncomplete = function (event) {
+                    db.close();
                     callback(true, null);
                 };
 
@@ -2237,6 +2239,7 @@ O.esri.Edit.EditStore = function () {
                 // Example: if you attempt to use an esri.Graphic in its native form you'll get a data clone error
                 try {
                     objectStore.put(dataStore);
+                    db.close();
                 }
                 catch (err) {
                     callback(false, JSON.stringify(err));
@@ -3005,6 +3008,7 @@ O.esri.Edit.EditStore = function () {
         var transaction = this._db.transaction([this.objectStoreName], "readwrite");
 
         transaction.oncomplete = function (event) {
+            this._db.close();
             callback(true);
         };
 
