@@ -4,6 +4,11 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on",
      return declare("OfflineTiles", [_WidgetBase], {   
 
         startup: function() {
+
+            if (Offline.state === 'up') {
+                _isOnline = true;
+            }
+            
             var tileLayer = O.esri.Tiles.OfflineTileEnablerLayer(
                 // "http://52.0.46.248:6080/arcgis/rest/services/RSW/RSW_Airfield_TS/MapServer",
                 "http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
