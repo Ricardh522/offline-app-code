@@ -77,7 +77,7 @@ a native app look this only happens after app is saved to the desktop-->
                 // Browser downloaded a new app cache.
                 if (confirm('A new version of this cache is available.')) {
                     window.location.reload();
-                    alert("App cache reloaded");
+                    console.log("App cache reloaded");
                     appCache.swapCache();
                 }
             } else {
