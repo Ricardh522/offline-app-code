@@ -1,7 +1,6 @@
 CACHE MANIFEST
-#v1.0
+#v1.2
 CACHE:
-#
 #
 index.html
 css/template-design.css
@@ -72,7 +71,6 @@ javascript/lib/TPKLayer.js
 javascript/lib/xml2json.js
 javascript/lib/zip.js
 javascript/vendor/IndexedDBShim.js
-javascript/vendor/IndexedDBShim.min.js
 javascript/vendor/jasmine-html.js
 javascript/vendor/jasmine.async.js
 javascript/vendor/jasmine.async.min.js
