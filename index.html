@@ -64,22 +64,14 @@ a native app look this only happens after app is saved to the desktop-->
             case appCache.OBSOLETE: // OBSOLETE == 5
               return 'OBSOLETE';
               break;
+            case appCache.CACHE_LOADED:
+              return 'CACHE LOADED';
             default:
               return 'UKNOWN CACHE STATUS';
               break;
           };
         };
 
-        appCache.addEventListener('error', function(evt) {
-          alert(evt);
-        }, false);
-
-        appCache.addEventListener('cached', function(evt) {
-          alert('App Cached successfully');
-        }, false);
-
-
-       
         appCache.addEventListener('updateready', function(evt) {
             if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
                 // Browser downloaded a new app cache.
@@ -215,13 +207,13 @@ a native app look this only happens after app is saved to the desktop-->
                 appCacheManager.setUpdateCache();
                 appCacheManager.setCacheListeners();
                 appCacheManager.getCacheStatus();
-                // appCacheManager.on(appCacheManager.CACHE_EVENT,cacheEventHandler);
-                // appCacheManager.on(appCacheManager.CACHE_ERROR,cacheErrorHandler);
-                // appCacheManager.on(appCacheManager.CACHE_LOADED,cacheLoaderHandler);
+                appCacheManager.on(appCacheManager.CACHE_EVENT,cacheEventHandler);
+                appCacheManager.on(appCacheManager.CACHE_ERROR,cacheErrorHandler);
+                appCacheManager.on(appCacheManager.CACHE_LOADED,cacheLoaderHandler);
             }
 
             function cacheLoaderHandler(evt){
-                if(evt == appCacheManager.CACHE_LOADED) console.log("Application cache successfully loaded!");
+                if(evt == appCacheManager.CACHE_LOADED) alert("Application cache successfully loaded!");
             }
 
             function cacheEventHandler(evt){
@@ -229,7 +221,7 @@ a native app look this only happens after app is saved to the desktop-->
             }
 
             function cacheErrorHandler(evt){
-                console.log("CACHE ERROR: " + JSON.stringify(evt));
+                alert("CACHE ERROR: " + JSON.stringify(evt));
             }
 
             
@@ -367,13 +359,8 @@ a native app look this only happens after app is saved to the desktop-->
               offlineWidget.testUrls.push(serverUrl + '/' + mapName + '/MapServer/' + item);
             });
 
-            offlineWidget.initModules(null, function(e) {
-              offlineWidget.init(null, function(e) {
-                offlineWidget.startTest(null, function(e) {
-                  console.log("OfflineWidget has been fully initialized");
-                });
-              });
-            });
+            offlineWidget.initialize();
+            
           });
     
 
