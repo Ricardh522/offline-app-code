@@ -1,5 +1,5 @@
 CACHE MANIFEST
-#
+#v1.9
 CACHE:
 #
 index.html
@@ -213,7 +213,6 @@ javascript/3.14/dojo/dnd/Mover.js
 javascript/3.14/dojo/dnd/autoscroll.js
 javascript/3.14/dojo/html.js
 javascript/3.14/dojox/gfx/svg.js
-#
 #
 NETWORK:
 *
