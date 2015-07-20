@@ -1,6 +1,7 @@
 CACHE MANIFEST
-#
+#v1.0
 CACHE:
+#
 #
 index.html
 css/template-design.css
@@ -117,6 +118,7 @@ javascript/3.14/esri/dijit/images/locate.png
 javascript/3.14/esri/dijit/PopupMobile.js
 javascript/3.14/esri/dijit/InfoView.js
 javascript/3.14/esri/dijit/NavigationBar.js
+javascript/3.14/esri/dijit/_TouchBase.js
 javascript/3.14/esri/nls/jsapi.js
 javascript/3.14/esri/layers/GeoRSSLayer.js
 javascript/3.14/esri/layers/FeatureLayer.js
@@ -213,7 +215,6 @@ javascript/3.14/dojo/dnd/Mover.js
 javascript/3.14/dojo/dnd/autoscroll.js
 javascript/3.14/dojo/html.js
 javascript/3.14/dojox/gfx/svg.js
-#
 #
 NETWORK:
 *

@@ -18,6 +18,16 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         DB_UID:  "objectid"
                     },
             
+            initialize: function() {
+                offlineWidget.initModules(null, function(e) {
+                  offlineWidget.init(null, function(e) {
+                    offlineWidget.startTest(null, function(e) {
+                      console.log("OfflineWidget has been fully initialized");
+                    });
+                  });
+                });
+            },
+
             validate: function(callback) {
                 (function() {
                     offlineWidget.validateOnline(function(result) {
@@ -265,7 +275,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
                 map.addLayer(tileLayer);
 
-                map.on('layers-add-result', function() {
+                map.on('layer-add-result', function() {
                     (function initSplashPage() {
                         var intro = $("#splashPage");
                         var mapPage = $(".container-fluid");

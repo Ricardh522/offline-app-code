@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
-<html>
-<!-- <html manifest="manifest.appcache"> -->
+<!-- <html> -->
+<html manifest="appcache.manifest">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
 <!-- meta tags to hide url and minimize status bar to give the web app
@@ -41,14 +41,44 @@ a native app look this only happens after app is saved to the desktop-->
 //     // Listen for application cache update events
 //     // We want to place this as early in the application life-cycle as possible!
     window.addEventListener('load', function(evt) {
+        
+        var appCache = window.applicationCache;
 
-        window.applicationCache.addEventListener('updateready', function(evt) {
+        var status = function() {
+          switch (appCache.status) {
+            case appCache.UNCACHED: // UNCACHED == 0
+              return 'UNCACHED';
+              break;
+            case appCache.IDLE: // IDLE == 1
+              return 'IDLE';
+              break;
+            case appCache.CHECKING: // CHECKING == 2
+              return 'CHECKING';
+              break;
+            case appCache.DOWNLOADING: // DOWNLOADING == 3
+              return 'DOWNLOADING';
+              break;
+            case appCache.UPDATEREADY:  // UPDATEREADY == 4
+              return 'UPDATEREADY';
+              break;
+            case appCache.OBSOLETE: // OBSOLETE == 5
+              return 'OBSOLETE';
+              break;
+            case appCache.CACHE_LOADED:
+              return 'CACHE LOADED';
+            default:
+              return 'UKNOWN CACHE STATUS';
+              break;
+          };
+        };
+
+        appCache.addEventListener('updateready', function(evt) {
             if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
                 // Browser downloaded a new app cache.
                 if (confirm('A new version of this cache is available.')) {
                     window.location.reload();
-                    console.log("App cache reloaded");
-                    window.applicationCache.swapCache();
+                    alert("App cache reloaded");
+                    appCache.swapCache();
                 }
             } else {
                 // Manifest didn't changed. Nothing new to server.
@@ -177,13 +207,13 @@ a native app look this only happens after app is saved to the desktop-->
                 appCacheManager.setUpdateCache();
                 appCacheManager.setCacheListeners();
                 appCacheManager.getCacheStatus();
-                // appCacheManager.on(appCacheManager.CACHE_EVENT,cacheEventHandler);
-                // appCacheManager.on(appCacheManager.CACHE_ERROR,cacheErrorHandler);
-                // appCacheManager.on(appCacheManager.CACHE_LOADED,cacheLoaderHandler);
+                appCacheManager.on(appCacheManager.CACHE_EVENT,cacheEventHandler);
+                appCacheManager.on(appCacheManager.CACHE_ERROR,cacheErrorHandler);
+                appCacheManager.on(appCacheManager.CACHE_LOADED,cacheLoaderHandler);
             }
 
             function cacheLoaderHandler(evt){
-                if(evt == appCacheManager.CACHE_LOADED) console.log("Application cache successfully loaded!");
+                if(evt == appCacheManager.CACHE_LOADED) alert("Application cache successfully loaded!");
             }
 
             function cacheEventHandler(evt){
@@ -191,23 +221,23 @@ a native app look this only happens after app is saved to the desktop-->
             }
 
             function cacheErrorHandler(evt){
-                console.log("CACHE ERROR: " + JSON.stringify(evt));
+                alert("CACHE ERROR: " + JSON.stringify(evt));
             }
 
             
            
             //var machine = "http://192.168.0.8"
             // var machine = "http://192.168.42.164"
-            var machine = "http://127.0.0.1"
+            // var machine = "http://127.0.0.1"
             // var machine = "http://192.168.1.134";
-            // var machine = "http://52.0.185.237";
+            var machine = "http://52.0.185.237";
             // var machine = "http://52.0.46.248:6080"
             var serverUrl = machine + "/waadmin/rest/services";
             
             // var serverUrl = machine + "/arcgis/rest/services"
             // var mapName = "RSW/RSW_Utilities_MS";
-            // var mapName = "Utilities";
-            var mapName = "RSW/Utilities"
+            var mapName = "Utilities";
+            // var mapName = "RSW/Utilities"
             var layersIndexes = ["16", "17", "18", "19", "20", "21"];
 
             offlineWidget = new OfflineWidget();
@@ -329,13 +359,8 @@ a native app look this only happens after app is saved to the desktop-->
               offlineWidget.testUrls.push(serverUrl + '/' + mapName + '/MapServer/' + item);
             });
 
-            offlineWidget.initModules(null, function(e) {
-              offlineWidget.init(null, function(e) {
-                offlineWidget.startTest(null, function(e) {
-                  console.log("OfflineWidget has been fully initialized");
-                });
-              });
-            });
+            offlineWidget.initialize();
+            
           });
     
 
@@ -367,7 +392,7 @@ a native app look this only happens after app is saved to the desktop-->
                 <div id="mapDiv">
                     <div id='scalebarHousing'></div>
                 </div>
-                <div id="legendHousing">
+                <div id="legendHousing" class="touch-moveable">
                     <span>Legend</span>
                     <div id="legendDiv" style="visibility: hidden"></div>
                 </div>
