@@ -415,13 +415,13 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 var EXTENT_BUFFER = this.offlineTiles.EXTENT_BUFFER;
                 var map = this.map;
 
-                // tileLayer.deleteAllTiles(function(success,err){
-                //     if(success === false){
-                //         alert("There was a problem deleting the tile cache");
-                //     }
-                //     else{
-                //         console.log("success deleting tile cache");
-                //         var self = this.data;
+                tileLayer.deleteAllTiles(function(success,err){
+                    if(success === false){
+                        alert("There was a problem deleting the tile cache");
+                    }
+                    else{
+                        console.log("success deleting tile cache");
+                        var self = this.data;
 
                         if( offlineWidget.downloadState == 'downloading')
                         {
@@ -443,8 +443,8 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                             offlineWidget.downloadState = 'downloading';
                           
                         }
-                //     }
-                // }.bind(this));
+                    }
+                }.bind(this));
             },
 
             /**
