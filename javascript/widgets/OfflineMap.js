@@ -32,7 +32,7 @@ define(["dojo/_base/declare", "dojo/parser", "esri/geometry/Polygon", "dojo/read
               if (!$(event.target).parents().hasClass("touch-moveable"))
                   {
                     event.preventDefault();
-                    event.stopPropogation();
+                    event.stopPropagation();
                 }
             } , false); 
         }
