@@ -218,7 +218,11 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                   console.log("There is a good connection");
                 });
 
-                var layerHolder = [];
+                var polyholder = [];
+                var lineholder = [];
+                var pointholder = [];
+                var layerholder = [];
+
                 arrayUtils.forEach(featureUrls, function(item) {
                     jsonUrl = item + '?f=json';
                     fetch(jsonUrl, function(response) {
@@ -247,12 +251,14 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
 
                         var xxx = new FeatureLayer(item, {
-                             mode: FeatureLayer.ON_DEMAND,
+                             mode: FeatureLayer.SNAPSHOT,
                              outFields: ["*"],
                              infoTemplate: popupTemplate,
                          });
-                       
-                       layerHolder.push(xxx);
+                       xxx.visible = false;
+                       xxx.setAutoGeneralize(true);
+
+                       layerholder.push(xxx);
                       
 
                     } else if (response === "failed") {
@@ -263,11 +269,79 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     });
                 });
 
-                map.addLayers(layerHolder);
-                map.on('layers-add-result', function(e) {
-                    offlineWidget.testLayers = layerHolder;
-                    offlineWidget.initPanZoomListeners();
-                });
+                map.addLayers(layerholder);
+
+                var arrangeLayers = map.on('layers-add-result', sortLayers);
+
+                function sortLayers (evt) {
+                    layerholder = [];
+                    var layerids = map.graphicsLayerIds;
+                    arrayUtils.forEach(layerids, function(id) {
+                        var layer = map.getLayer(id);
+                        LoadTypes(layer);
+                    });
+
+                    reOrder(function(e) {
+                        arrangeLayers.remove();
+                    });
+                };
+
+                var reordered = map.on('layers-reordered', newLayerHolder);
+
+                function newLayerHolder(evt) {
+                    layerholder = [];
+                    var layerids = map.graphicsLayerIds;
+                    arrayUtils.forEach(layerids, function(id) {
+                        var layer = map.getLayer(id);
+                        layer.visible = true;
+                        layerholder.push(layer);
+                    });
+                    reordered.remove();
+                };
+
+                function LoadTypes(layer) {
+                       switch (layer.geometryType) {
+                        case "esriGeometryPolygon":
+                            polyholder.push(layer);
+                            break;
+                        case "esriGeometryPolyline":
+                            lineholder.push(layer);
+                            break;
+                        case "esriGeometryPoint":
+                            pointholder.push(layer);
+                            break;
+                       }
+                   };
+
+                function reOrder(callback) {
+
+                    if (pointholder.length > 0) {
+                        for (i=0; i<pointholder.length; i+=1) {
+                            map.reorderLayer(pointholder[i], 1);
+                        }
+                        
+                    }
+
+                    if(lineholder.length > 0) {
+                        for (i=0; i<lineholder.length; i+=1) {
+                            map.reorderLayer(lineholder[i], 1);
+                        }
+                        
+                    }
+
+                    if(polyholder.length > 0) {
+                        for (i=0; i<polyholder.length; i+=1) {
+                            map.reorderLayer(polyholder[i], 1);
+                        }
+                        
+                    }
+
+                    callback(true);
+
+                };
+
+                offlineWidget.initPanZoomListeners();
+                offlineWidget.testLayers = layerholder;
             },
 
             init: function(params, callback) {
@@ -275,18 +349,20 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
                 map.addLayer(tileLayer);
 
-                map.on('layer-add-result', function() {
-                    (function initSplashPage() {
-                        var intro = $("#splashPage");
-                        var mapPage = $(".container-fluid");
-                        
-                        mapPage.css('visibility', 'visible');
-                        mapPage.css('opacity', 1);
-                        intro.css('opacity', 0);
-                        intro.css('visibility', 'hidden');
-                        
-                    })();
-                });
+                var splash = map.on('layer-add-result', initSplashPage);
+                    
+                function initSplashPage() {
+                    var intro = $("#splashPage");
+                    var mapPage = $(".container-fluid");
+                    
+                    mapPage.css('visibility', 'visible');
+                    mapPage.css('opacity', 1);
+                    intro.css('opacity', 0);
+                    intro.css('visibility', 'hidden');
+                    splash.remove();
+                }
+
+                
                 this.offlineMap.initEvents();
                 callback(true);
              },
