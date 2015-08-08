@@ -20,10 +20,8 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
             initialize: function() {
                 offlineWidget.initModules(null, function(e) {
                   offlineWidget.init(null, function(e) {
-                    offlineWidget.startTest(null, function(e) {
-                      console.log("OfflineWidget has been fully initialized");
+                    console.log("offline widget has been fully initialized");
                     });
-                  });
                 });
             },
 
@@ -76,9 +74,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                 $('#downloadButton').on('mouseup', function(e) {
                     $(this).css('-webkit-transform', 'scale(1.25, 1.25)');
-                       offlineWidget.downloadTiles();
-                       offlineWidget.initOfflineDatabase();
-                   });
+                    offlineWidget.downloadTiles();
+                });
+
 
                 $('#clearButton').on('mouseup', function(e) {
                     $(this).css('-webkit-transform', 'scale(1.25, 1.25)');
@@ -138,7 +136,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         process.then( function(results) {
                             var rem = function reCreate(callback) {
                                 db.close();
-                                offlineWidget.clearMap(function(e) {
+                                offlineWidget.clearMap(null, function(e) {
                                     map.graphics.clear();
                                     callback();
                                 });
@@ -161,7 +159,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     callback(true);
             },
 
-            startTest: function(param, callback) {
+            startFeatureDownload: function(param, callback) {
 
                 var map = this.map;
                 var featureUrls = this.testUrls;
@@ -266,10 +264,8 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 });
 
                 
-
-                var arrangeLayers = map.on('layers-add-result', sortLayers);
-
-                function sortLayers (evt) {
+                
+                var arrangeLayers = map.on('layers-add-result', function (evt) {
                     layerholder = [];
                     var layerids = map.graphicsLayerIds;
                     arrayUtils.forEach(layerids, function(id) {
@@ -280,20 +276,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     reOrder(function(e) {
                         arrangeLayers.remove();
                     });
-                };
+                });
 
-                var reordered = map.on('layers-reordered', newLayerHolder);
-
-                function newLayerHolder(evt) {
-                    layerholder = [];
-                    var layerids = map.graphicsLayerIds;
-                    arrayUtils.forEach(layerids, function(id) {
-                        var layer = map.getLayer(id);
-                        layer.visible = true;
-                        layerholder.push(layer);
-                    });
-                    reordered.remove();
-                };
+                map.addLayers(layerholder);
 
                 function LoadTypes(layer) {
                        switch (layer.geometryType) {
@@ -332,12 +317,24 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         
                     }
 
-                    callback(true);
+                    var layerIds = map.graphicsLayerIds;
+                    var layerholder = [];
+                    for (i=0; i<layerIds.length;i+=1) {
+                        layerholder.push(layerIds[i]);
+                    }
+
+                    if (layerIds.length === layerholder.length) {
+                        offlineWidget.layerholder = layerholder;
+                        callback(offlineWidget.layerholder);
+                    } else {
+                        console.log("not all of the layers were extracted from map into layerholder");
+                    }
+                    
 
                 };
 
                 offlineWidget.initPanZoomListeners();
-                offlineWidget.testLayers = layerholder;
+                
             },
 
             init: function(params, callback) {
@@ -379,8 +376,8 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
                     if(state){
                         tileLayer.goOnline();
-                        offlineWidget.clearMap(function(e) {
-                            offlineWidget.startTest();
+                        offlineWidget.clearMap(null, function(e) {
+                            offlineWidget.displayMap();
                             $('#downloadButton').attr('disabled', false);
                             $('#clearButton').attr('disabled', false);
                         });
@@ -388,7 +385,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     }
                         else{
                             tileLayer.goOffline();
-                            offlineWidget.clearMap(function(e) {
+                            offlineWidget.clearMap(null, function(e) {
                                 offlineWidget.loadOffline(function(e) {
                                     console.log("All Layers Loaded Offline");
                                     $('#clearButton').attr('disabled', true);
@@ -481,14 +478,16 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
              * Manually starts the process to download and store tiles
              * in the local database
              */
-            downloadTiles: function(){
+            downloadTiles: function(callback){
                 var tileLayer = this.offlineTiles.tileLayer;
                 var minZoomAdjust = this.offlineTiles.minZoomAdjust;
                 var maxZoomAdjust = this.offlineTiles.maxZoomAdjust;
                 var EXTENT_BUFFER = this.offlineTiles.EXTENT_BUFFER;
                 var map = this.map;
+                
 
                 tileLayer.deleteAllTiles(function(success,err){
+                    var deferred = new Deferred();
                     if(success === false){
                         alert("There was a problem deleting the tile cache");
                     }
@@ -514,18 +513,21 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                             $('#navbar' ).append(message);
                             tileLayer.prepareForOffline(zoom.min, zoom.max, extent, offlineWidget.reportProgress.bind(this));
                             offlineWidget.downloadState = 'downloading';
-                          
                         }
                     }
+
+                
                 }.bind(this));
+
+                
             },
 
             /**
-             * Reports the process while downloading tiles.
+             * Reports the process while downloading tiles. and initiates the feature layer downloads upon completion
              */
             reportProgress: function(progress)
             {
-            
+               
                
                 if(progress.hasOwnProperty("countNow")){
                  
@@ -543,8 +545,12 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     else
                     {
                         offlineWidget.downloadState = 'downloaded';
-
                         alert("Tile download complete");
+                        offlineWidget.clearMap(null, function(e) {
+                            offlineWidget.startFeatureDownload(null, function(layers) {
+                                offlineWidget.initOfflineDatabase(e);
+                            });
+                        });
                     }
 
             
@@ -555,7 +561,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
            
 
-            clearMap: function(callback) {
+            clearMap: function(params, callback) {
                 var map = this.map;
                 var graphicIds = map.graphicsLayerIds;
                 var mapIds = map.layerIds;
@@ -567,8 +573,11 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     }
                 }
                 if (map.graphicsLayerIds.length === 0) {
+                    console.log("All graphic layers removed from Map");
                     callback();
                 };
+
+                
             },
 
             displayMap: function() {
@@ -600,23 +609,16 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
              /// Offline Feature Functions//
             ///////////////////////////////////////////
 
-                initOfflineDatabase: function() {
-                    var layers = [];
-                    var newLayers = layers.concat(this.testLayers);
-                    console.log(newLayers);
-                    if (offlineWidget.hasOwnProperty("_listener")) {
-                        offlineWidget._listener.remove();
-                    };
-
-            
+                initOfflineDatabase: function(layers) {
+                    var newLayers = layers;
                     offlineWidget.buildDatabase(newLayers);
                     if(_isOnline === true){
-                         offlineWidget.clearMap(function(e) {
-                            offlineWidget.startTest();
+                         offlineWidget.clearMap(null, function(e) {
+                            offlineWidget.displayMap();
                          })
 
                     } else {
-                         offlineWidget.clearMap(function(e) {
+                         offlineWidget.clearMap(null, function(e) {
                             offlineWidget.loadOffline();
                         });
                     }
@@ -776,7 +778,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                             
                         };
                         callback()
-                        return
+                       
 
                     },
 
