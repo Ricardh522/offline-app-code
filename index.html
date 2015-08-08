@@ -239,13 +239,16 @@ a native app look this only happens after app is saved to the desktop-->
             var mapName = "Utilities";
             // var mapName = "RSW/Utilities"
             var layersIndexes = [];
-            for (i = 0; i <= 32; i+=1) { 
+            for (i = 0; i <= 15; i+=1) { 
               layersIndexes.push(i);
             };
 
+            var mapService = new ArcGISDynamicMapServiceLayer(serverUrl + '/' + mapName + '/MapServer');
             offlineWidget = new OfflineWidget();
 
-            offlineWidget.startup({onlineTest: serverUrl}, function(e) {
+            offlineWidget.startup({
+                onlineTest: serverUrl,
+                mapService: mapService}, function(e) {
               console.log("offlineWidget was started");
             });
 
@@ -357,7 +360,7 @@ a native app look this only happens after app is saved to the desktop-->
 
 
             offlineWidget.testUrls = [];
-            // Testing taking a feature service offline
+         
             arrayUtils.forEach(layersIndexes, function(item) {
               offlineWidget.testUrls.push(serverUrl + '/' + mapName + '/MapServer/' + item);
             });

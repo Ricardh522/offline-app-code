@@ -8,13 +8,12 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
      return declare("OfflineWidget", [_WidgetBase], {   
 
      
-             ayerUrls: {},
             indexes: [],
             map: "",
             testUrls: [],
             onlineTest: "",
             editStore: {DB_NAME:"features_store",  
-                        DB_OBJECTSTORE_NAME:  "features",
+                        DB_STORE_NAME:  "features",
                         DB_UID:  "objectid"
                     },
             
@@ -51,10 +50,12 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 },
 
             startup: function(params, callback) {
-               
+               var editStore = this.editStore;
+               var DB_NAME = editStore.DB_NAME;
+               var DB_STORE_NAME = editStore.DB_STORE_NAME;
                  
-
                 this.onlineTest = params.onlineTest;
+                this.mapService = params.mapService;
                 offlineWidget.validate(function(e) {
                     console.log(e);
                 });
@@ -81,79 +82,74 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                 $('#clearButton').on('mouseup', function(e) {
                     $(this).css('-webkit-transform', 'scale(1.25, 1.25)');
-                        var DB_NAME = 'features_store';
-                        var DB_STORE_NAME = 'features';
-                        var db;
+                    
+                    var db;
 
-                        var openDb = function (params, callback) {
-                            request = indexedDB.open(DB_NAME, 11);
-                            request.onupgradeneeded = function(event) {
-                                var db = event.target.result;
-                                var store = db.createObjectStore(DB_STORE_NAME, {keyPath: 'id'});
-                                var index = store.createIndex("by_id", "id", {unique: true});
-                                db.close();
-                            }
-
-                            request.onsuccess = function(event) {
-                              db = event.target.result;
-                              callback(db);
-                            };
-
-                            request.onerror = function() {
-                                console.log(request.error);
-                            }
-                        };
-
-                        var getObjectStore = function (store_name, mode) {
-                            
-                            var tx = db.transaction(store_name, mode);
-                            tx.onabort = function() {
-                                console.log(tx.error);
-                                return 
-                            }
-                            return tx.objectStore(store_name);
-                          }
-
-                        
-                       function clearObjectStore() {
-                            var deferred = new Deferred();
-                            var store = getObjectStore(DB_STORE_NAME, 'readwrite');
-                            var req = store.clear();
-                            req.onsuccess = function(evt) {
-                              console.log("Store cleared");
-                              deferred.resolve("sucess");
-                            };
-
-                            req.onerror = function (evt) {
-                              console.error("clearObjectStore:", evt.target.errorCode);
-                              deferred.resolve("fail");
-                            };
-                            return deferred.promise
+                    var openDb = function (params, callback) {
+                        request = indexedDB.open(DB_NAME, 11);
+                        request.onupgradeneeded = function(event) {
+                            var db = event.target.result;
+                            var store = db.createObjectStore(DB_STORE_NAME, {keyPath: 'id'});
+                            var index = store.createIndex("by_id", "id", {unique: true});
+                            db.close();
                         }
 
-                        openDb(null, function(e) {
-                            db = e
-                            var map = offlineWidget.map;
-                            var process = clearObjectStore();
-                            process.then( function(results) {
-                                var rem = function reCreate(callback) {
-                                    db.close();
-                                    offlineWidget.clearMap(function(e) {
-                                        map.graphics.clear();
-                                        callback();
-                                    });
-                                };
-                                
-                                rem(function(e) {
-                                        offlineWidget.startTest(null, function(e) {
-                                            console.log('features have been cleared from cache and re-added back into Map');
+                        request.onsuccess = function(event) {
+                          db = event.target.result;
+                          callback(db);
+                        };
 
-                                        });
-                                    }); 
-                            });
-                        });  
-                
-            });
+                        request.onerror = function() {
+                            console.log(request.error);
+                        }
+                    };
+
+                    var getObjectStore = function (store_name, mode) {
+                        
+                        var tx = db.transaction(store_name, mode);
+                        tx.onabort = function() {
+                            console.log(tx.error);
+                            return 
+                        }
+                        return tx.objectStore(store_name);
+                      }
+
+                    
+                   function clearObjectStore() {
+                        var deferred = new Deferred();
+                        var store = getObjectStore(DB_STORE_NAME, 'readwrite');
+                        var req = store.clear();
+                        req.onsuccess = function(evt) {
+                          console.log("Store cleared");
+                          deferred.resolve("sucess");
+                        };
+
+                        req.onerror = function (evt) {
+                          console.error("clearObjectStore:", evt.target.errorCode);
+                          deferred.resolve("fail");
+                        };
+                        return deferred.promise
+                    }
+
+                    openDb(null, function(e) {
+                        db = e
+                        var map = offlineWidget.map;
+                        var process = clearObjectStore();
+                        process.then( function(results) {
+                            var rem = function reCreate(callback) {
+                                db.close();
+                                offlineWidget.clearMap(function(e) {
+                                    map.graphics.clear();
+                                    callback();
+                                });
+                            };
+                            
+                            rem(function(e) {
+                                offlineWidget.displayMap(); 
+                            }); 
+                        });
+                    });  
+                });
             
             },
 
@@ -269,7 +265,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     });
                 });
 
-                map.addLayers(layerholder);
+                
 
                 var arrangeLayers = map.on('layers-add-result', sortLayers);
 
@@ -346,12 +342,13 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
             init: function(params, callback) {
                 var map = offlineWidget.map;
+                var mapService = this.mapService;
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
-                map.addLayer(tileLayer);
+                map.addLayers([tileLayer,mapService]);
 
-                var splash = map.on('layer-add-result', initSplashPage);
+                var splash = map.on('layers-add-result', initSplashPage);
                     
-                function initSplashPage() {
+                function initSplashPage(e) {
                     var intro = $("#splashPage");
                     var mapPage = $(".container-fluid");
                     
@@ -411,7 +408,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     Offline.check();
 
                     var req = new XMLHttpRequest();
-                    var maxWaitTime = 10000;
+                    var maxWaitTime = 100000;
                     var noResponseTimer = setTimeout(function() {
                         req.abort();
                         callback('failed');
@@ -546,7 +543,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     else
                     {
                         offlineWidget.downloadState = 'downloaded';
-                        offlineWidget.initOfflineDatabase();
+
                         alert("Tile download complete");
                     }
 
@@ -576,8 +573,13 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
             displayMap: function() {
                 var map = this.map;
-                var layer = this.serviceList.mapServiceLayer;
+                var layer = this.mapService;
+                var _listener = map.on('layer-add-result', function(e) {
+                    console.log("Map Service Added back to Map");
+                });
+
                 map.addLayer(layer);
+
             },
 
             updateLocalStorage: function() {
@@ -678,8 +680,8 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                             var request = indexedDB.open(editStore.DB_NAME, 11);
                             request.onsuccess = function(event) {
                                     var db = event.target.result
-                                    var tx = db.transaction([editStore.DB_OBJECTSTORE_NAME], 'readonly');
-                                    var store = tx.objectStore(editStore.DB_OBJECTSTORE_NAME);
+                                    var tx = db.transaction([editStore.DB_STORE_NAME], 'readonly');
+                                    var store = tx.objectStore(editStore.DB_STORE_NAME);
                                     var index = store.index('by_id');
 
                                  
@@ -756,10 +758,10 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                 var db = request.result;
                                 var names = db.objectStoreNames;
                                 
-                                if (names.contains(editStore.DB_OBJECTSTORE_NAME)) {
+                                if (names.contains(editStore.DB_STORE_NAME)) {
                                     db.close()
                                 } else {
-                                    var store = db.createObjectStore(editStore.DB_OBJECTSTORE_NAME, {keyPath: "id"});
+                                    var store = db.createObjectStore(editStore.DB_STORE_NAME, {keyPath: "id"});
                                     var index = store.createIndex("by_id", "id", {unique: true});
                                     db.close();
                                 }
@@ -781,18 +783,16 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 buildDatabase: function (params){
 
                         // params should be an object of {json: layer}
-                        var editStore = Object.create(offlineWidget.editStore);
-                        
-                        editStore._isDBInit = false;
+                        var editStore = offlineWidget.editStore;
                         editStore._featureLayers = [];
                         var db;
                    
                         offlineWidget.initDB(function(e) {
-                            var request = indexedDB.open(editStore.DB_NAME);
+                            var request = indexedDB.open(editStore.DB_NAME, 11);
                             request.onsuccess = function() {
                                     var db = request.result
-                                    var tx = db.transaction(editStore.DB_OBJECTSTORE_NAME, 'readwrite');
-                                    var store = tx.objectStore(editStore.DB_OBJECTSTORE_NAME);
+                                    var tx = db.transaction(editStore.DB_STORE_NAME, 'readwrite');
+                                    var store = tx.objectStore(editStore.DB_STORE_NAME);
                           
                                     arrayUtils.forEach(params, function(e) {
                                         store.put(entry(e));
