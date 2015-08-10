@@ -85,8 +85,8 @@ body {
     visibility: hidden;
     transition-property: opacity, visibility;
     transition-delay: 0;
-    transition-duration: 6s
-    overflow: hidden;
+    transition-duration: 6s;
+    overflow: hidden
 }
 
 .col-xs-12,

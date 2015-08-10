@@ -90,7 +90,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                             var store = db.createObjectStore(DB_STORE_NAME, {keyPath: 'id'});
                             var index = store.createIndex("by_id", "id", {unique: true});
                             db.close();
-                        }
+                        };
 
                         request.onsuccess = function(event) {
                           db = event.target.result;
@@ -99,7 +99,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                         request.onerror = function() {
                             console.log(request.error);
-                        }
+                        };
                     };
 
                     var getObjectStore = function (store_name, mode) {
@@ -107,30 +107,31 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         var tx = db.transaction(store_name, mode);
                         tx.onabort = function() {
                             console.log(tx.error);
-                            return 
-                        }
+                            return; 
+                        };
                         return tx.objectStore(store_name);
-                      }
+                      };
 
                     
                    function clearObjectStore() {
                         var deferred = new Deferred();
                         var store = getObjectStore(DB_STORE_NAME, 'readwrite');
                         var req = store.clear();
+
                         req.onsuccess = function(evt) {
-                          console.log("Store cleared");
-                          deferred.resolve("sucess");
+                            console.log("Store cleared");
+                            deferred.resolve("sucess");
                         };
 
                         req.onerror = function (evt) {
-                          console.error("clearObjectStore:", evt.target.errorCode);
-                          deferred.resolve("fail");
+                            console.error("clearObjectStore:", evt.target.errorCode);
+                            deferred.resolve("fail");
                         };
-                        return deferred.promise
+                    return deferred.promise;
                     }
 
                     openDb(null, function(e) {
-                        db = e
+                        db = e;
                         var map = offlineWidget.map;
                         var process = clearObjectStore();
                         process.then( function(results) {
@@ -159,7 +160,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     callback(true);
             },
 
-            startFeatureDownload: function(param, callback) {
+            /*Begin the process of downloading the feature services and collecting them in layerholder*/
+
+            startFeatureDownload: function(param) {
 
                 var map = this.map;
                 var featureUrls = this.testUrls;
@@ -178,13 +181,13 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     var noResponseTimer = setTimeout(function() {
                         xmlhttp.abort();
                         callback('failed');
-                        return
+                        return;
                     }, maxWaitTime);
                 
                     xmlhttp.onreadystatechange = function() {
                         var status = xmlhttp.status;
                         if (this.readyState != 4) {
-                            return
+                            return;
                         } 
 
                         if (this.readyState == 4 && this.status == 200) {
@@ -197,12 +200,12 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         } else {
                             fireEvent("connectionerror", {});
                         }
-                    }
+                    };
                     
                     xmlhttp.open('GET', inputUrl, false);
                     xmlhttp.send();
 
-                }
+                };
 
                 window.addEventListener("connectionerror", function(e) {
                   alert("There is a connection error");
@@ -212,10 +215,10 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                   console.log("There is a good connection");
                 });
 
-                var polyholder = [];
-                var lineholder = [];
-                var pointholder = [];
-                var layerholder = [];
+            
+                var polys = [];
+                var lines = [];
+                var points = [];
 
                 arrayUtils.forEach(featureUrls, function(item) {
                     jsonUrl = item + '?f=json';
@@ -236,104 +239,62 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                             };
 
                             fieldinfo.push(entry);
-                        };
+                        }
 
-                        var popupTemplate = new PopupTemplate({
-                            title: response.name,
-                            fieldInfos: fieldinfo
-                        });
+                            var popupTemplate = new PopupTemplate({
+                                title: response.name,
+                                fieldInfos: fieldinfo
+                            });
 
 
-                        var xxx = new FeatureLayer(item, {
-                             mode: FeatureLayer.SNAPSHOT,
-                             outFields: ["*"],
-                             infoTemplate: popupTemplate,
-                         });
-                       xxx.visible = false;
-                       xxx.setAutoGeneralize(true);
+                            var xxx = new FeatureLayer(item, {
+                                 mode: FeatureLayer.MODE_ONDEMAND,
+                                 outFields: ["*"],
+                                 infoTemplate: popupTemplate,
+                             });
+                           xxx.visible = false;
+                           xxx.setAutoGeneralize(true);
 
-                       layerholder.push(xxx);
-                      
+                           switch (response.geometryType) {
+                                case "esriGeometryPolygon":
+                                    polys.push(xxx);
+                                    break;
+                                case "esriGeometryPolyline":
+                                    lines.push(xxx);
+                                    break;
+                                case "esriGeometryPoint":
+                                    points.push(xxx);
+                                    break;
+                           }
 
-                    } else if (response === "failed") {
+                      } else if (response === "failed") {
                         _isOnline = false;
                         _isOffline = true;
                         $('#downloadButton').attr('disabled', true);
-                        } 
+                        }
                     });
+                }); 
+
+                var _layerlistener = map.on('layers-add-result', function(e) {
+                     var ids = map.graphicsLayerIds;
+                     var layerholder = [];
+                     _layerlistener.remove();
+                     arrayUtils.forEach(ids, function(id) {
+                        var xxx = map.getLayer(id);
+                        xxx.show();
+                        xxx.refresh();
+                        layerholder.push(xxx);
+                    });
+
+                    offlineWidget.initPanZoomListeners();
+                    offlineWidget.layerholder = layerholder;
+                    offlineWidget.initOfflineDatabase(offlineWidget.layerholder);
                 });
 
-                
-                
-                var arrangeLayers = map.on('layers-add-result', function (evt) {
-                    layerholder = [];
-                    var layerids = map.graphicsLayerIds;
-                    arrayUtils.forEach(layerids, function(id) {
-                        var layer = map.getLayer(id);
-                        LoadTypes(layer);
-                    });
-
-                    reOrder(function(e) {
-                        arrangeLayers.remove();
-                    });
-                });
-
-                map.addLayers(layerholder);
-
-                function LoadTypes(layer) {
-                       switch (layer.geometryType) {
-                        case "esriGeometryPolygon":
-                            polyholder.push(layer);
-                            break;
-                        case "esriGeometryPolyline":
-                            lineholder.push(layer);
-                            break;
-                        case "esriGeometryPoint":
-                            pointholder.push(layer);
-                            break;
-                       }
-                   };
-
-                function reOrder(callback) {
-
-                    if (pointholder.length > 0) {
-                        for (i=0; i<pointholder.length; i+=1) {
-                            map.reorderLayer(pointholder[i], 1);
-                        }
-                        
-                    }
-
-                    if(lineholder.length > 0) {
-                        for (i=0; i<lineholder.length; i+=1) {
-                            map.reorderLayer(lineholder[i], 1);
-                        }
-                        
-                    }
-
-                    if(polyholder.length > 0) {
-                        for (i=0; i<polyholder.length; i+=1) {
-                            map.reorderLayer(polyholder[i], 1);
-                        }
-                        
-                    }
-
-                    var layerIds = map.graphicsLayerIds;
-                    var layerholder = [];
-                    for (i=0; i<layerIds.length;i+=1) {
-                        layerholder.push(layerIds[i]);
-                    }
-
-                    if (layerIds.length === layerholder.length) {
-                        offlineWidget.layerholder = layerholder;
-                        callback(offlineWidget.layerholder);
-                    } else {
-                        console.log("not all of the layers were extracted from map into layerholder");
-                    }
+                var layerlist = polys.concat(lines, points);
+                map.addLayers(layerlist);
                     
-
-                };
-
-                offlineWidget.initPanZoomListeners();
+                
                 
             },
 
@@ -360,9 +321,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 this.offlineMap.initEvents();
                 callback(true);
              },
-         //////////////////////////////////////
-        ///Online Offline Methods//
-       //////////////////////////////////////
+         /*////////////////////////////////
+        /Online Offline Methods
+       //////////////////////////////////*/
             updateState: function(){
                 if(Offline.state === 'up'){
                     offlineWidget.toggleStateUp(true);
@@ -409,7 +370,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     var noResponseTimer = setTimeout(function() {
                         req.abort();
                         callback('failed');
-                        return
+                        return;
                     }, maxWaitTime);
 
                     if (Offline.state === 'up') {
@@ -417,7 +378,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         req.onreadystatechange = function() {
                             var status = req.status;
                             if (this.readyState != 4) {
-                                return
+                                return;
                             }
                             if (this.readyState == 4 && this.status == 200) {
                                 
@@ -426,7 +387,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                 req.onload = function() {
                                     req = null;
                                     callback(true);
-                                    }
+                                    };
                                 } else {
                                     console.log("verifyOffline failed");
                                     req = null;
@@ -441,7 +402,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     try {
                         req.send(null);    
                     } catch(err) {
-                        console.log(err)
+                        console.log(err);
                     }
                         
                 } 
@@ -547,9 +508,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         offlineWidget.downloadState = 'downloaded';
                         alert("Tile download complete");
                         offlineWidget.clearMap(null, function(e) {
-                            offlineWidget.startFeatureDownload(null, function(layers) {
-                                offlineWidget.initOfflineDatabase(e);
-                            });
+                            offlineWidget.startFeatureDownload(null);
                         });
                     }
 
@@ -575,7 +534,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 if (map.graphicsLayerIds.length === 0) {
                     console.log("All graphic layers removed from Map");
                     callback();
-                };
+                }
 
                 
             },
@@ -585,6 +544,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 var layer = this.mapService;
                 var _listener = map.on('layer-add-result', function(e) {
                     console.log("Map Service Added back to Map");
+                    _listener.remove();
                 });
 
                 map.addLayer(layer);
@@ -609,21 +569,27 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
              /// Offline Feature Functions//
             ///////////////////////////////////////////
 
-                initOfflineDatabase: function(layers) {
-                    var newLayers = layers;
-                    offlineWidget.buildDatabase(newLayers);
-                    if(_isOnline === true){
-                         offlineWidget.clearMap(null, function(e) {
-                            offlineWidget.displayMap();
-                         })
+                initOfflineDatabase: function(layerholder) {
+                    offlineWidget.buildDatabase(layerholder, function(e) {
+                        if(_isOnline === true){
+                             var test = 1;
+                             if (test === 0) {
+                                offlineWidget.clearMap(null, function(e) {
+                                    offlineWidget.displayMap();
+                                });
+                            } else {
+                                //  offlineWidget.clearMap(null, function(e) {
+                                //     offlineWidget.loadOffline();
+                                // });
+                            }
 
-                    } else {
-                         offlineWidget.clearMap(null, function(e) {
-                            offlineWidget.loadOffline();
-                        });
-                    }
+                        } else {
+                             offlineWidget.clearMap(null, function(e) {
+                                offlineWidget.loadOffline();
+                            });
+                        }
+                    });
                     
-
                 },
 
                  /**
@@ -668,20 +634,21 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                         var dataStore = offlineWidget.getFeatureLayerJSON(inlayer);
                         var success;
                         if (typeof dataStore === "object") {
-                            success = true
+                            success = true;
                         } else {
-                            success = false
+                            success = false;
                         }
                             callback(success, dataStore);
                     },
 
-                loadOffline: function (callback) {
+                loadOffline: function () {
                     // retreive the features from indexedDB and load into the map
                      offlineWidget.initDB(function(e) {
                             var editStore = offlineWidget.editStore;
                             var request = indexedDB.open(editStore.DB_NAME, 11);
                             request.onsuccess = function(event) {
-                                    var db = event.target.result
+                                    var layerlist = [];
+                                    var db = event.target.result;
                                     var tx = db.transaction([editStore.DB_STORE_NAME], 'readonly');
                                     var store = tx.objectStore(editStore.DB_STORE_NAME);
                                     var index = store.index('by_id');
@@ -725,24 +692,23 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                             }
 
                                             testLayer.infoTemplate = popupTemplate;
-
-                                            offlineWidget.map.addLayer(testLayer);
-
-                                            console.log("Feature has been added back to the map while offline.");
-                                           
+                                            layerlist.push(testLayer);
+                                            
                                             cursor.continue();
                                         }
-                                    }
-                                    callback();
-                                }
+                                    };
+                                    offlineWidget.map.addLayers(layerlist);
+                                };
 
                                 request.onerror = function() {
                                         alert("There was a problem retrieving feature layer options object. " + dataStore);
                                         callback(false);
-                                }
+                                };
+
+
                             });
 
-                        
+                            
                 },
 
                 /**
@@ -761,81 +727,85 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                 var names = db.objectStoreNames;
                                 
                                 if (names.contains(editStore.DB_STORE_NAME)) {
-                                    db.close()
+                                    db.close();
                                 } else {
                                     var store = db.createObjectStore(editStore.DB_STORE_NAME, {keyPath: "id"});
                                     var index = store.createIndex("by_id", "id", {unique: true});
                                     db.close();
                                 }
 
-                            }
+                            };
                             
                              request.onsuccess = function() {
-                                var db = request.result
+                                var db = request.result;
                                 db.close();
-                            }
+                            };
                             editStore._isDBInit = true;
                             
-                        };
-                        callback()
+                        }
+                        callback();
                        
 
                     },
 
-                buildDatabase: function (params){
+                buildDatabase: function (layerholder, callback){
 
                         // params should be an object of {json: layer}
                         var editStore = offlineWidget.editStore;
                         editStore._featureLayers = [];
                         var db;
-                   
+
                         offlineWidget.initDB(function(e) {
                             var request = indexedDB.open(editStore.DB_NAME, 11);
                             request.onsuccess = function() {
-                                    var db = request.result
+                                    var db = request.result;
+                                    
+                                    
+                                    var myDataStore = function (layer) {
+                                          var dataStore = offlineWidget.getFeatureLayerJSON(layer);
+                                          dataStore.id = layer.name;
+                                          var FEATURE_COLLECTION_ID = layer.name + '_collection';
+                                          layer.offlineExtended = true; // to identify layer has been extended
+                                          layer.objectIdField = editStore.DB_UID;
+                                          var url = null;
+                                          if(layer.url) {
+                                                url = layer.url;
+                                                // we keep track of the FeatureLayer object
+                                                editStore._featureLayers[layer.url] = layer;
+                                          }
+
+                                          return dataStore;
+                                    };
+
+                                    var entries = [];
+                                    arrayUtils.forEach(layerholder, function(layer) {
+                                        var entry = myDataStore(layer);
+                                        entries.push(entry);
+                                    });
+                                    
                                     var tx = db.transaction(editStore.DB_STORE_NAME, 'readwrite');
                                     var store = tx.objectStore(editStore.DB_STORE_NAME);
-                          
-                                    arrayUtils.forEach(params, function(e) {
-                                        store.put(entry(e));
+
+                                 
+                                    arrayUtils.forEach(entries, function(entry) {
+                                        console.log(entry);
+                                        store.put(entry);
+                                        console.log("entry put");
                                     });
 
                                     tx.oncomplete = function() {
-                                        console.log('all requests have succedded');
-                                        db.close();
-                                        return
-                                    }
+                                        callback('all features loaded into indexedDB');
+                                    };
 
                                     tx.onabort = function() {
-                                        console.log(tx.error);
-                                        return 
-                                    }
-                                }
+                                        console.log(tx.errorCode);
+                                        callback('error');
+                                    };
+                                };
+
                         });
 
-                        var entry = function (layer) {
-                            var featureLayerJSON = null;
-                            var dataStore = featureLayerJSON = offlineWidget.getFeatureLayerJSON(layer);
-
-                            var name = layer.name;
-                             dataStore.id = layer.name;
-
-                             var FEATURE_COLLECTION_ID = layer.name + '_collection';
-                         
-                              layer.offlineExtended = true; // to identify layer has been extended
-
-                              layer.objectIdField = editStore.DB_UID;
-
-                              var url = null;
-
-                              if(layer.url) {
-                                    url = layer.url;
-                                    // we keep track of the FeatureLayer object
-                                    editStore._featureLayers[layer.url] = layer;
-                              } 
-
-                              return dataStore
-                        }
+                        
 
                     },
 
