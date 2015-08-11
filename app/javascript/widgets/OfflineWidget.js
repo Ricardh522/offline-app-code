@@ -1,8 +1,8 @@
 define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/on", "dojo/Deferred", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
-    "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet", "esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
+    "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "widgets/OfflineTPK", "esri/tasks/FeatureSet", "esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
 "esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/geometry/Point",  "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol",
  "esri/symbols/SimpleLineSymbol", "esri/Color"],
-  function (declare, arrayUtils, parser, ready, on, Deferred, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters,
+  function (declare, arrayUtils, parser, ready, on, Deferred, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, OfflineTPK, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters,
  Extent, PopupTemplate, FeatureLayer, Point, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
 
      return declare("OfflineWidget", [_WidgetBase], {   
@@ -74,7 +74,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                 $('#downloadButton').on('mouseup', function(e) {
                     $(this).css('-webkit-transform', 'scale(1.25, 1.25)');
-                    offlineWidget.downloadTiles();
+                    //offlineWidget.downloadTiles();
                 });
 
 
@@ -153,11 +153,16 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
             },
 
             initModules: function(params, callback){
+                    (function() {
                     offlineWidget.offlineMap = new OfflineMap();
                     offlineWidget.offlineTiles = new OfflineTiles();
+                    offlineWidget.offlineTPK = new OfflineTPK();
                     offlineWidget.offlineMap.startup();
                     offlineWidget.offlineTiles.startup();
+                    offlineWidget.offlineTPK.startup();
+                })();
                     callback(true);
+                    
             },
 
             /*Begin the process of downloading the feature services and collecting them in layerholder*/
@@ -308,13 +313,13 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
             init: function(params, callback) {
                 var map = offlineWidget.map;
-                var mapService = this.mapService;
-                var tileLayer = offlineWidget.offlineTiles.tileLayer;
-                map.addLayers([tileLayer,mapService]);
+                // var mapService = this.mapService;
+                // var tileLayer = offlineWidget.offlineTiles.tileLayer;
+                // map.addLayers([tileLayer, mapService]);
 
-                var splash = map.on('layers-add-result', initSplashPage);
+                // var splash = map.on('layer-add-result', initSplashPage);
                     
-                function initSplashPage(e) {
+                function initSplashPage() {
                     var intro = $("#splashPage");
                     var mapPage = $(".container-fluid");
                     
@@ -322,10 +327,10 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     mapPage.css('opacity', 1);
                     intro.css('opacity', 0);
                     intro.css('visibility', 'hidden');
-                    splash.remove();
+                    // splash.remove();
                 }
 
-                
+                initSplashPage();
                 this.offlineMap.initEvents();
                 callback(true);
              },
@@ -710,7 +715,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                             var _listener = map.on('layer-add-result', function(e) {
                                                 _listener.remove();
                                                 cursor.continue();
-                                            })
+                                            });
                                             map.addLayer(testLayer);
                                             // layerlist.push(testLayer);
                                             
@@ -720,7 +725,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                                     tx.oncomplete = function(evt) {
                                         deferred.resolve("transaction completed collecting layers from store");
-                                    }
+                                    };
 
                                     //deferred.then(offlineWidget.map.addLayers(layerlist));
                                 };
