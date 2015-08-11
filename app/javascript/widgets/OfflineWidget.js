@@ -252,7 +252,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                  outFields: ["*"],
                                  infoTemplate: popupTemplate,
                              });
-                           xxx.visible = false;
+                           xxx.visible = true;
                            xxx.setAutoGeneralize(true);
 
                            switch (response.geometryType) {
@@ -275,27 +275,35 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     });
                 }); 
 
-                var _layerlistener = map.on('layers-add-result', function(e) {
+                var _layerslistener = map.on('layers-add-result', function(e) {
+                    
                      var ids = map.graphicsLayerIds;
                      var layerholder = [];
-                     _layerlistener.remove();
+                     _layerslistener.remove();
                      arrayUtils.forEach(ids, function(id) {
                         var xxx = map.getLayer(id);
-                        xxx.show();
-                        xxx.refresh();
-                        layerholder.push(xxx);
+                        if (xxx.loaded === true) {
+                            xxx.visible = true;
+                            layerholder.push(xxx);
+                        } else {
+                            (function(callback) {
+                            var _singleListen = xxx.on('loaded', function(e) {
+                                e.visible = true;
+                                layerholder.push(e);
+                                _singleListen.remove();
+                                callback();
+                                });
+                            })();
+                        }
                     });
-
                     offlineWidget.initPanZoomListeners();
                     offlineWidget.layerholder = layerholder;
                     offlineWidget.initOfflineDatabase(offlineWidget.layerholder);
-                });
+                 });
 
                 var layerlist = polys.concat(lines, points);
                 map.addLayers(layerlist);
                     
-                
-                
             },
 
             init: function(params, callback) {
@@ -507,6 +515,10 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     {
                         offlineWidget.downloadState = 'downloaded';
                         alert("Tile download complete");
+                        offlineWidget.offlineTiles.tileLayer.saveToFile("myOfflineTilesLayer.csv", function(success, msg) {
+                            console.log(success);
+                            console.log(msg);
+                        });
                         offlineWidget.clearMap(null, function(e) {
                             offlineWidget.startFeatureDownload(null);
                         });
@@ -571,6 +583,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                 initOfflineDatabase: function(layerholder) {
                     offlineWidget.buildDatabase(layerholder, function(e) {
+                        console.log(e);
                         if(_isOnline === true){
                              var test = 1;
                              if (test === 0) {
@@ -578,9 +591,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                     offlineWidget.displayMap();
                                 });
                             } else {
-                                //  offlineWidget.clearMap(null, function(e) {
-                                //     offlineWidget.loadOffline();
-                                // });
+                                 offlineWidget.clearMap(null, function(e) {
+                                    offlineWidget.loadOffline();
+                                });
                             }
 
                         } else {
@@ -644,10 +657,12 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 loadOffline: function () {
                     // retreive the features from indexedDB and load into the map
                      offlineWidget.initDB(function(e) {
+                            var layerlist = [];
                             var editStore = offlineWidget.editStore;
+                            var deferred = new Deferred();
                             var request = indexedDB.open(editStore.DB_NAME, 11);
                             request.onsuccess = function(event) {
-                                    var layerlist = [];
+                                    var map = offlineWidget.map;
                                     var db = event.target.result;
                                     var tx = db.transaction([editStore.DB_STORE_NAME], 'readonly');
                                     var store = tx.objectStore(editStore.DB_STORE_NAME);
@@ -692,12 +707,22 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                             }
 
                                             testLayer.infoTemplate = popupTemplate;
-                                            layerlist.push(testLayer);
+                                            var _listener = map.on('layer-add-result', function(e) {
+                                                _listener.remove();
+                                                cursor.continue();
+                                            })
+                                            map.addLayer(testLayer);
+                                            // layerlist.push(testLayer);
                                             
-                                            cursor.continue();
+                                            
                                         }
                                     };
-                                    offlineWidget.map.addLayers(layerlist);
+
+                                    tx.oncomplete = function(evt) {
+                                        deferred.resolve("transaction completed collecting layers from store");
+                                    }
+
+                                    //deferred.then(offlineWidget.map.addLayers(layerlist));
                                 };
 
                                 request.onerror = function() {
@@ -749,17 +774,17 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     },
 
                 buildDatabase: function (layerholder, callback){
-
+                        
                         // params should be an object of {json: layer}
                         var editStore = offlineWidget.editStore;
                         editStore._featureLayers = [];
-                        var db;
-
+                       
                         offlineWidget.initDB(function(e) {
+                            var db;
+                            var deferred = new Deferred();
                             var request = indexedDB.open(editStore.DB_NAME, 11);
-                            request.onsuccess = function() {
-                                    var db = request.result;
-                                    
+                            request.onsuccess = function(evt) {
+                                    db = evt.target.result;
                                     
                                     var myDataStore = function (layer) {
                                           var dataStore = offlineWidget.getFeatureLayerJSON(layer);
@@ -794,19 +819,24 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                     });
 
                                     tx.oncomplete = function() {
-                                        callback('all features loaded into indexedDB');
+                                       deferred.resolve('all features loaded into indexedDB');
                                     };
 
                                     tx.onabort = function() {
                                         console.log(tx.errorCode);
-                                        callback('error');
+                                        deferred.resolve('error');
                                     };
                                 };
+                            request.onerror = function(evt) {
+                                console.log(evt.target.errorCode);
+                                deferred.resolve('error');
+                            };
 
+                            deferred.then(function(e) {
+                                callback(e);
+                            });
+                          
                         });
-
-                        
-
                     },
 
                 getFeatureLayerJSON: function (item) {
