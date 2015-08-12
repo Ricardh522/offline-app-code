@@ -5,10 +5,11 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on",
 
             startup: function() {
                  // Retrieve the TPK file via an HTTP request
-                    var tpk = null;
+                    var tpkLayer = null;
                     var xhrRequest = new XMLHttpRequest();
-                    xhrRequest.open("GET", "../data/Utilities_Local.zip", true);
+                    xhrRequest.open("GET", "/data/Utilities_Local.zip", true);
                     xhrRequest.responseType = "blob";
+                    xhrRequest.setRequestHeader("Content-type", "application/octet-stream");
                     xhrRequest.onprogress = function(evt){
                         var percent;
                         if(evt.hasOwnProperty("total")){
@@ -58,22 +59,39 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on",
                 function initMap(entries){
                     var map = offlineWidget.map;
                     //Destroy the old map so we can reload a new map
-                    if(tpk !== null){
-                        map.removeLayer(tpk);
+                    if(tpkLayer !== null){
+                        map.removeLayer(tpkLayer);
                         //map.destroy();
-                        tpk = null;
+                        tpkLayer = null;
                     }
 
-                    tpk = new O.esri.TPK.TPKLayer();
-                    tpk.on("progress", function (evt) {
+                    tpkLayer = new O.esri.TPK.TPKLayer();
+                    tpkLayer.on("progress", function (evt) {
                         console.log(evt);
                     });
                      
-                    tpk.extend(entries);
+                    tpkLayer.extend(entries);
                         
-                    offlineWidget.map.addLayer(tpk);
+                    offlineWidget.map.addLayer(tpkLayer);
+
+                    tpkLayer.on("validationEvent", function(evt){
+                        console.log(evt.msg);
+                        console.log(evt.err); 
+                        if(evt.msg == tpkLayer.NO_SUPPORT_ERROR){
+                            //Let the user know the library isn't supported.
+                            alert("NO_SUPPRT_ERROR");
+                        }
+                    });
+
+                    tpkLayer.on("databaseErrorEvent", function(evt){
+                        console.log(evt.msg);
+                        console.log(evt.err);
+                        if(evt.msg == tpkLayer.DB_INIT_ERROR){
+                            //Let the user know there was a db problem.
+                            alert("DB_INIT_ERROR");
+                        }
+                    });
                 }
-            
         }
     });
 });
