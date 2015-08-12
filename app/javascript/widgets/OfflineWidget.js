@@ -1,4 +1,4 @@
-define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/on", "dojo/Deferred", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
+define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/dom-class", "dojo/on", "dojo/Deferred", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
     "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet", "esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
 "esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/geometry/Point",  "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol",
  "esri/symbols/SimpleLineSymbol", "esri/Color"],
@@ -584,21 +584,30 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 initOfflineDatabase: function(layerholder) {
                     offlineWidget.buildDatabase(layerholder, function(e) {
                         console.log(e);
+                        var clearNode = dom.byId("clearButton");
+                        var tileNode = dom.byId("downloadButton");
+                        var featureNode = dom.byId("downloadFeatures");
+
                         if(_isOnline === true){
                              var test = 1;
                              if (test === 0) {
                                 offlineWidget.clearMap(null, function(e) {
                                     offlineWidget.displayMap();
+                                    
+                                    domClass.add(tileNode, "disabled");
+                                    domClass.remove(clearNode, "disabled");
                                 });
                             } else {
                                  offlineWidget.clearMap(null, function(e) {
                                     offlineWidget.loadOffline();
+                                    domClass.add(tileNode, "disabled");
                                 });
                             }
 
                         } else {
                              offlineWidget.clearMap(null, function(e) {
                                 offlineWidget.loadOffline();
+                                domClass.add(tileNode, "disabled");
                             });
                         }
                     });
