@@ -131,6 +131,7 @@ javascript/3.14/esri/geometry/Polygon.js
 javascript/3.14/esri/geometry/Extent.js
 javascript/3.14/esri/geometry/geometryEngine.js
 javascript/3.14/esri/tasks/QueryTask.js
+javascript/3.14/esri/tasks/query.js
 javascript/3.14/esri/tasks/RelationshipQuery.js
 javascript/3.14/esri/tasks/StatisticDefinition.js
 javascript/3.14/esri/tasks/ProjectParameters.js

@@ -1,9 +1,9 @@
-define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/dom-class", "dojo/on", "dojo/Deferred", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
-    "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet", "esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
-"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/geometry/Point",  "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol",
+define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/dom", "dojo/dom-class", "dojo/on", "dojo/Deferred", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
+    "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet","esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
+"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/tasks/query", "esri/geometry/Point",  "esri/geometry/Polygon", "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol",
  "esri/symbols/SimpleLineSymbol", "esri/Color"],
-  function (declare, arrayUtils, parser, ready, on, Deferred, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters,
- Extent, PopupTemplate, FeatureLayer, Point, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
+  function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters,
+ Extent, PopupTemplate, FeatureLayer, Query, Point, Polygon, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
 
      return declare("OfflineWidget", [_WidgetBase], {   
 
@@ -67,19 +67,25 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     zoom = localStorage.offlineZoom;
                 }
 
-                $('#downloadButton, #clearButton').on('mousedown', function(e) {
+                $('#downloadButton, #downloadFeatures, #clearButton').on('mousedown', function(e) {
                     e.preventDefault();
-                    $(this).css('transform', 'scale(1.5, 1.5)');
+                    $(this).css('transform', 'scale(1.25, 1.25)');
                 });
 
                 $('#downloadButton').on('mouseup', function(e) {
-                    $(this).css('-webkit-transform', 'scale(1.25, 1.25)');
+                    $(this).css('-webkit-transform', 'scale(1, 1)');
                     offlineWidget.downloadTiles();
                 });
 
 
+                $('#downloadFeatures').on('mouseup', function(e) {
+                    $(this).css('-webkit-transform', 'scale(1, 1)');
+                    offlineWidget.startFeatureDownload(null);
+
+                });
+
                 $('#clearButton').on('mouseup', function(e) {
-                    $(this).css('-webkit-transform', 'scale(1.25, 1.25)');
+                    $(this).css('-webkit-transform', 'scale(1, 1)');
                     
                     var db;
 
@@ -167,6 +173,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 var map = this.map;
                 var featureUrls = this.testUrls;
 
+
                 var fireEvent = function(name, data) {
                   var e = document.createEvent("Event");
                   e.initEvent(name, true, true);
@@ -219,91 +226,93 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 var polys = [];
                 var lines = [];
                 var points = [];
+                offlineWidget.clearMap(null, function(evt) {
 
-                arrayUtils.forEach(featureUrls, function(item) {
-                    jsonUrl = item + '?f=json';
-                    fetch(jsonUrl, function(response) {
-                     if (response.type === "Feature Layer") {
-                        // create the field info array for the feature layer
-                        var fieldinfo = [];
-                        var fields = response.fields;
-                        var count;
-                       
-                        for (count=0; count < fields.length; count ++) {
-                            
-                            var f = fields.shift();
-                            var entry = {
-                                fieldName: f.name,
-                                label: f.alias,
-                                visible: true
-                            };
+                    arrayUtils.forEach(featureUrls, function(item) {
+                        jsonUrl = item + '?f=json';
+                        fetch(jsonUrl, function(response) {
+                         if (response.type === "Feature Layer") {
+                            // create the field info array for the feature layer
+                            var fieldinfo = [];
+                            var fields = response.fields;
+                            var count;
+                           
+                            for (count=0; count < fields.length; count ++) {
+                                
+                                var f = fields.shift();
+                                var entry = {
+                                    fieldName: f.name,
+                                    label: f.alias,
+                                    visible: true
+                                };
 
-                            fieldinfo.push(entry);
-                        }
+                                fieldinfo.push(entry);
+                            }
 
-                            var popupTemplate = new PopupTemplate({
-                                title: response.name,
-                                fieldInfos: fieldinfo
-                            });
-
-
-                            var xxx = new FeatureLayer(item, {
-                                 mode: FeatureLayer.MODE_ONDEMAND,
-                                 outFields: ["*"],
-                                 infoTemplate: popupTemplate,
-                             });
-                           xxx.visible = true;
-                           xxx.setAutoGeneralize(true);
-
-                           switch (response.geometryType) {
-                                case "esriGeometryPolygon":
-                                    polys.push(xxx);
-                                    break;
-                                case "esriGeometryPolyline":
-                                    lines.push(xxx);
-                                    break;
-                                case "esriGeometryPoint":
-                                    points.push(xxx);
-                                    break;
-                           }
-
-                      } else if (response === "failed") {
-                        _isOnline = false;
-                        _isOffline = true;
-                        $('#downloadButton').attr('disabled', true);
-                        }
-                    });
-                }); 
-
-                var _layerslistener = map.on('layers-add-result', function(e) {
-                    
-                     var ids = map.graphicsLayerIds;
-                     var layerholder = [];
-                     _layerslistener.remove();
-                     arrayUtils.forEach(ids, function(id) {
-                        var xxx = map.getLayer(id);
-                        if (xxx.loaded === true) {
-                            xxx.visible = true;
-                            layerholder.push(xxx);
-                        } else {
-                            (function(callback) {
-                            var _singleListen = xxx.on('loaded', function(e) {
-                                e.visible = true;
-                                layerholder.push(e);
-                                _singleListen.remove();
-                                callback();
+                                var popupTemplate = new PopupTemplate({
+                                    title: response.name,
+                                    fieldInfos: fieldinfo
                                 });
-                            })();
-                        }
-                    });
-                    offlineWidget.initPanZoomListeners();
-                    offlineWidget.layerholder = layerholder;
-                    offlineWidget.initOfflineDatabase(offlineWidget.layerholder);
-                 });
 
-                var layerlist = polys.concat(lines, points);
-                map.addLayers(layerlist);
-                    
+
+                                var xxx = new FeatureLayer(item, {
+                                     mode: FeatureLayer.MODE_ONDEMAND,
+                                     outFields: ["*"],
+                                     infoTemplate: popupTemplate,
+                                     visible: true,
+
+                                 });
+
+                               switch (response.geometryType) {
+                                    case "esriGeometryPolygon":
+                                        polys.push(xxx);
+                                        break;
+                                    case "esriGeometryPolyline":
+                                        lines.push(xxx);
+                                        break;
+                                    case "esriGeometryPoint":
+                                        points.push(xxx);
+                                        break;
+                               }
+
+                          } else if (response === "failed") {
+                            _isOnline = false;
+                            _isOffline = true;
+                            $('#downloadButton').attr('disabled', true);
+                            }
+                        });
+                    }); 
+
+                    var _layerslistener = map.on('layers-add-result', function(e) {
+                        
+                         var ids = map.graphicsLayerIds;
+                         var layerholder = [];
+                         _layerslistener.remove();
+                         arrayUtils.forEach(ids, function(id) {
+                            var xxx = map.getLayer(id);
+                            if (xxx.loaded === true) {
+                                layerholder.push(xxx);
+                            } else {
+                                (function(callback) {
+                                var _singleListen = xxx.on('loaded', function(e) {
+                                    e.visible = true;
+                                    layerholder.push(e);
+                                    _singleListen.remove();
+                                    callback();
+                                    });
+                                })();
+                            }
+                        });
+                        offlineWidget.initPanZoomListeners();
+                        offlineWidget.layerholder = layerholder;
+                        // offlineWidget.initOfflineDatabase(offlineWidget.layerholder);
+                     });
+
+                    var finalLayerList = polys.concat(lines.reverse(), points);
+                    map.addLayers(polys.concat(lines.reverse(), points.slice(4,8)));
+                    // map.addLayers(points.slice(4,8));
+                    domClass.remove('clearButton', 'disabled');
+                });
             },
 
             init: function(params, callback) {
@@ -519,9 +528,6 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                             console.log(success);
                             console.log(msg);
                         });
-                        offlineWidget.clearMap(null, function(e) {
-                            offlineWidget.startFeatureDownload(null);
-                        });
                     }
 
             
@@ -547,6 +553,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     console.log("All graphic layers removed from Map");
                     callback();
                 }
+
 
                 
             },
@@ -664,6 +671,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     },
 
                 loadOffline: function () {
+                    var map = offlineWidget.map;
                     // retreive the features from indexedDB and load into the map
                      offlineWidget.initDB(function(e) {
                             var layerlist = [];
@@ -718,9 +726,11 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                             testLayer.infoTemplate = popupTemplate;
                                             var _listener = map.on('layer-add-result', function(e) {
                                                 _listener.remove();
+                                                e.layer.visible = true;
+                                                e.layer.refresh();
                                                 cursor.continue();
-                                            })
-                                            map.addLayer(testLayer);
+                                            });
+                                            offlineWidget.map.addLayer(testLayer, 1);
                                             // layerlist.push(testLayer);
                                             
                                             
@@ -729,7 +739,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                                     tx.oncomplete = function(evt) {
                                         deferred.resolve("transaction completed collecting layers from store");
-                                    }
+                                    };
 
                                     //deferred.then(offlineWidget.map.addLayers(layerlist));
                                 };

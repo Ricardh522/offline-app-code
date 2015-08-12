@@ -239,7 +239,7 @@ a native app look this only happens after app is saved to the desktop-->
             // var mapName = "Utilities";
             var mapName = "RSW/Utilities"
             var layersIndexes = [];
-            for (i = 22; i <= 27; i+=1) { 
+            for (i = 1; i <= 33; i+=1) { 
               layersIndexes.push(i);
             };
 
@@ -251,6 +251,8 @@ a native app look this only happens after app is saved to the desktop-->
                 mapService: mapService}, function(e) {
               console.log("offlineWidget was started");
             });
+
+            offlineWidget.layerIndexes = layersIndexes;
 
             var storedExtent = localStorage.offlineExtent;
             var mapExtent;
@@ -397,11 +399,11 @@ a native app look this only happens after app is saved to the desktop-->
                           <span class= "glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
                         </button>
                         
-                        <button type='button' id="downloadFeatures" class='btn btn-default disabled'>
+                        <button type='button' id="downloadFeatures" class='btn btn-default'>
                             <span class= "glyphicon glyphicon-download-alt" aria-hidden="true"></span>
                         </button>
 
-                        <button type='button' id="clearButton" class="btn btn-default disabled">
+                        <button type='button' id="clearButton" class="btn btn-default">
                              <span class= "glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>
                         </button>
                   </div>
