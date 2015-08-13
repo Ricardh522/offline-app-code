@@ -1,9 +1,10 @@
 define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/dom", "dojo/dom-class", "dojo/on", "dojo/Deferred", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
     "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet","esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
-"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/tasks/query", "esri/geometry/Point",  "esri/geometry/Polygon", "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol",
- "esri/symbols/SimpleLineSymbol", "esri/Color"],
-  function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters,
- Extent, PopupTemplate, FeatureLayer, Query, Point, Polygon, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
+"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/arcgis/utils", "esri/graphicsUtils", "esri/geometry/geometryEngine", "esri/tasks/query", "esri/geometry/Point",
+  "esri/geometry/Polygon", "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color"],
+  function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet,
+   ArcGISDynamicMapServiceLayer, ImageParameters, Extent, PopupTemplate, FeatureLayer, arcgisUtils, graphicsUtils, geometryEngine,
+    Query, Point, Polygon, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
 
      return declare("OfflineWidget", [_WidgetBase], {   
 
@@ -290,6 +291,8 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                                  });
 
+                            var geometries = graphicsUtils.getGeometries(xxx.graphics);
+                            
                                switch (response.geometryType) {
                                     case "esriGeometryPolygon":
                                         polys.push(xxx);
@@ -341,8 +344,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                      });
 
                     var finalLayerList = polys.concat(lines.reverse(), points);
-                    map.addLayers(polys.concat(lines.reverse(), points.slice(4,8)));
-                    // map.addLayers(points.slice(4,8));
+                    // map.addLayers(polys.concat(lines.reverse(), points.slice(4,8)));
+                    map.addLayers(polys.concat(lines));
+
                 });
             },
 
