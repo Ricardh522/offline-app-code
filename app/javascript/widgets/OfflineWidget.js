@@ -27,18 +27,33 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
             validate: function(callback) {
                 (function() {
+                    var downloadTiles = dom.byId('downloadTiles');
+                    var downloadFeatures = dom.byId('downloadFeatures');
+                    var clearButton = dom.byId('clearButton');
+                    var buttons = [downloadTiles, downloadFeatures, clearButton];
+
                     offlineWidget.validateOnline(function(result) {
+                     
                         if(result !== 'failed') {
                             _isOnline = true;
                             _isOffline = false;
                             //setUIOnline();
+                           arrayUtils.forEach(buttons, function(e) {
+                                    if (domClass.contains(e, "disabled") === true) {
+                                        domClass.remove(e, "disabled");
+                                    }
+                                });
                             callback(_isOnline);
                            
                         }
                         else {
                             _isOnline = false;
                             _isOffline = true;
-                            //setUIOffline();
+                            arrayUtils.forEach(buttons, function(e) {
+                                    if (domClass.contains(e, "disabled") === false) {
+                                        domClass.add(e, "disabled");
+                                    }
+                                });
                             callback(_isOnline);
                         }
                         
@@ -67,24 +82,32 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     zoom = localStorage.offlineZoom;
                 }
 
-                $('#downloadButton, #downloadFeatures, #clearButton').on('mousedown', function(e) {
+                $('#downloadTiles, #downloadFeatures, #clearButton').on('mousedown', function(e) {
                     e.preventDefault();
                     $(this).css('transform', 'scale(1.25, 1.25)');
                 });
 
-                $('#downloadButton').on('mouseup', function(e) {
+                $('#downloadTiles, #downloadFeatures, #clearButton').on('mouseout', function(e) {
+                    e.preventDefault();
+                    $(this).css('transform', 'scale(1, 1)');
+                });
+
+                $('#downloadTiles').on('mouseup', function(e) {
+                    e.preventDefault();
                     $(this).css('-webkit-transform', 'scale(1, 1)');
                     offlineWidget.downloadTiles();
                 });
 
 
                 $('#downloadFeatures').on('mouseup', function(e) {
+                    e.preventDefault();
                     $(this).css('-webkit-transform', 'scale(1, 1)');
                     offlineWidget.startFeatureDownload(null);
 
                 });
 
                 $('#clearButton').on('mouseup', function(e) {
+                    e.preventDefault();
                     $(this).css('-webkit-transform', 'scale(1, 1)');
                     
                     var db;
@@ -169,6 +192,10 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
             /*Begin the process of downloading the feature services and collecting them in layerholder*/
 
             startFeatureDownload: function(param) {
+                var downloadTiles = dom.byId('downloadTiles');
+                var downloadFeatures = dom.byId('downloadFeatures');
+                var clearButton = dom.byId('clearButton');
+                var buttons = [downloadTiles, downloadFeatures, clearButton];
 
                 var map = this.map;
                 var featureUrls = this.testUrls;
@@ -276,9 +303,14 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                }
 
                           } else if (response === "failed") {
-                            _isOnline = false;
-                            _isOffline = true;
-                            $('#downloadButton').attr('disabled', true);
+                                _isOnline = false;
+                                _isOffline = true;
+
+                                arrayUtils.forEach(buttons, function(e) {
+                                    if (domClass.contains(e, "disabled") === false) {
+                                        domClass.add(e, "disabled");
+                                    }
+                                });
                             }
                         });
                     }); 
@@ -311,7 +343,6 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     var finalLayerList = polys.concat(lines.reverse(), points);
                     map.addLayers(polys.concat(lines.reverse(), points.slice(4,8)));
                     // map.addLayers(points.slice(4,8));
-                    domClass.remove('clearButton', 'disabled');
                 });
             },
 
@@ -351,23 +382,31 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
             },
 
             toggleStateUp: function (state){
+                var downloadTiles = dom.byId('downloadTiles');
+                var downloadFeatures = dom.byId('downloadFeatures');
+                var clearButton = dom.byId('clearButton');
+                var buttons = [downloadTiles, downloadFeatures, clearButton];
+
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
                     if(state){
                         tileLayer.goOnline();
                         offlineWidget.clearMap(null, function(e) {
                             offlineWidget.displayMap();
-                            $('#downloadButton').attr('disabled', false);
-                            $('#clearButton').attr('disabled', false);
+                            arrayUtils.forEach(buttons, function(e) {
+                                    if (domClass.contains(e, "disabled") === true) {
+                                        domClass.remove(e, "disabled");
+                                    }
+                                });
                         });
                         
                     }
                         else{
                             tileLayer.goOffline();
                             offlineWidget.clearMap(null, function(e) {
-                                offlineWidget.loadOffline(function(e) {
-                                    console.log("All Layers Loaded Offline");
-                                    $('#clearButton').attr('disabled', true);
-                                    $('#downloadButton').attr('disabled', true);
+                                arrayUtils.forEach(buttons, function(e) {
+                                    if (domClass.contains(e, "disabled") === false) {
+                                        domClass.add(e, "disabled");
+                                    }
                                 });
                             });
                         }

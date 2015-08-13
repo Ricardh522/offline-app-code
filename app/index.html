@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
-<html>
-<!-- <html manifest="appcache.manifest"> -->
+<!-- <html> -->
+<html manifest="appcache.manifest">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
 <!-- meta tags to hide url and minimize status bar to give the web app
@@ -395,15 +395,15 @@ a native app look this only happens after app is saved to the desktop-->
                   </div>
                 
                   <div id = "offlineButtons" class = "btn-group" role="group" aria-label="imagery and feature download">
-                        <button type='button'  id="downloadButton" class="btn btn-primary">
+                        <button type='button'  id="downloadTiles" class="btn btn-primary disabled">
                           <span class= "glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
                         </button>
                         
-                        <button type='button' id="downloadFeatures" class='btn btn-default'>
+                        <button type='button' id="downloadFeatures" class='btn btn-default disabled'>
                             <span class= "glyphicon glyphicon-download-alt" aria-hidden="true"></span>
                         </button>
 
-                        <button type='button' id="clearButton" class="btn btn-default">
+                        <button type='button' id="clearButton" class="btn btn-default disabled">
                              <span class= "glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>
                         </button>
                   </div>
