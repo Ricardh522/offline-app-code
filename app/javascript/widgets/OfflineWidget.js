@@ -1,10 +1,10 @@
-define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/dom", "dojo/dom-class", "dojo/on", "dojo/Deferred", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
+define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/dom", "dojo/dom-class", "dojo/on", "dojo/Deferred", "dojo/promise/all", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
     "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet","esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
-"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/arcgis/utils", "esri/graphicsUtils", "esri/geometry/geometryEngine", "esri/tasks/query", "esri/geometry/Point",
-  "esri/geometry/Polygon", "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color"],
-  function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet,
+"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/arcgis/utils", "esri/graphicsUtils", "esri/geometry/geometryEngine", "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Point",
+  "esri/geometry/Polygon", "esri/request", "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color"],
+  function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, all, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet,
    ArcGISDynamicMapServiceLayer, ImageParameters, Extent, PopupTemplate, FeatureLayer, arcgisUtils, graphicsUtils, geometryEngine,
-    Query, Point, Polygon, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
+    Query, QueryTask, Point, Polygon, esriRequest, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
 
      return declare("OfflineWidget", [_WidgetBase], {   
 
@@ -192,7 +192,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
             /*Begin the process of downloading the feature services and collecting them in layerholder*/
 
-            startFeatureDownload: function(param) {
+            startFeatureDownload: function(param, callback) {
                 var downloadTiles = dom.byId('downloadTiles');
                 var downloadFeatures = dom.byId('downloadFeatures');
                 var clearButton = dom.byId('clearButton');
@@ -201,70 +201,40 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 var map = this.map;
                 var featureUrls = this.testUrls;
 
-
-                var fireEvent = function(name, data) {
-                  var e = document.createEvent("Event");
-                  e.initEvent(name, true, true);
-                  e.data = data;
-                  window.dispatchEvent(e);
-                };
-
-                var fetch = function(inputUrl, callback) {
-
-                    var xmlhttp = new XMLHttpRequest();
-                    var maxWaitTime = 10000;
-                    var noResponseTimer = setTimeout(function() {
-                        xmlhttp.abort();
-                        callback('failed');
-                        return;
-                    }, maxWaitTime);
-                
-                    xmlhttp.onreadystatechange = function() {
-                        var status = xmlhttp.status;
-                        if (this.readyState != 4) {
-                            return;
-                        } 
-
-                        if (this.readyState == 4 && this.status == 200) {
-                            fireEvent("goodconnection", {});
-                            clearTimeout(noResponseTimer);
-                            var rawresponse = xmlhttp.response;
-                            var response = JSON.parse(rawresponse);
-                            console.log(response);
-                            callback(response);
-                        } else {
-                            fireEvent("connectionerror", {});
-                        }
-                    };
-                    
-                    xmlhttp.open('GET', inputUrl, false);
-                    xmlhttp.send();
-
-                };
-
-                window.addEventListener("connectionerror", function(e) {
-                  alert("There is a connection error");
-                });
-
-                window.addEventListener("goodconnection", function(e) {
-                  console.log("There is a good connection");
-                });
-
-            
-                var polys = [];
-                var lines = [];
-                var points = [];
                 offlineWidget.clearMap(null, function(evt) {
-
+                    
+                    var extent = map.extent;
+                    var i = [];
+                    var featureLayers = [];
+                    var index = 0;
                     arrayUtils.forEach(featureUrls, function(item) {
-                        jsonUrl = item + '?f=json';
-                        fetch(jsonUrl, function(response) {
+                        var request = new esriRequest({
+                            url: item,
+                            content: {f: "json"},
+                            handleAs: "json",
+                            callbackParamName: "callback"
+                        });
+                        request.then(function(response) {
                          if (response.type === "Feature Layer") {
+                            index += 1;
+                            var drawingInfo = response.drawingInfo;
+                            var geometryType = response.geometryType;
+                            var displayField = response.displayField;
+                            var typeIdField = response.typeIdField;
+                            var types = response.types;
+                            var fields = response.fields;
+                            var id = response.id;
+                            var name = response.name;
+                          
+                            // var queryTask = new QueryTask(item);
+                            var query = new Query();
+                            query.returnGeometry = false;
+                            //query.outFields = ["*"];
+                            query.geometry = extent;
+                            query.spatialRelationship = Query.SPATIAL_REL_INTERSECT;
                             // create the field info array for the feature layer
                             var fieldinfo = [];
-                            var fields = response.fields;
                             var count;
-                           
                             for (count=0; count < fields.length; count ++) {
                                 
                                 var f = fields.shift();
@@ -277,77 +247,89 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                 fieldinfo.push(entry);
                             }
 
-                                var popupTemplate = new PopupTemplate({
-                                    title: response.name,
-                                    fieldInfos: fieldinfo
-                                });
+                            var popupTemplate = new PopupTemplate({
+                                title: response.name,
+                                fieldInfos: fieldinfo
+                            });
 
-
-                                var xxx = new FeatureLayer(item, {
-                                     mode: FeatureLayer.MODE_ONDEMAND,
-                                     outFields: ["*"],
-                                     infoTemplate: popupTemplate,
-                                     visible: true,
-
-                                 });
-
-                            var geometries = graphicsUtils.getGeometries(xxx.graphics);
+                             var layer = new FeatureLayer(item, {
+                                mode: FeatureLayer.MODE_SNAPSHOT,
+                                infoTemplate: popupTemplate
+                            });
                             
-                               switch (response.geometryType) {
-                                    case "esriGeometryPolygon":
-                                        polys.push(xxx);
-                                        break;
-                                    case "esriGeometryPolyline":
-                                        lines.push(xxx);
-                                        break;
-                                    case "esriGeometryPoint":
-                                        points.push(xxx);
-                                        break;
-                               }
+                            var queryLayer = function(layer) {
+                                layer.queryIds(query, function(result) {
+                                console.log(result);
+                                if (result !== null) {
+                                    i.push(1);
+                                    layer.setDefinitionExpression("OBJECTID IN (" + result.join(',') + ")");
+                                    featureLayers.push(layer);
+                                } else {
+                                    i.push(0);
+                                }
 
-                          } else if (response === "failed") {
-                                _isOnline = false;
-                                _isOffline = true;
-
-                                arrayUtils.forEach(buttons, function(e) {
-                                    if (domClass.contains(e, "disabled") === false) {
-                                        domClass.add(e, "disabled");
-                                    }
-                                });
-                            }
-                        });
-                    }); 
-
-                    var _layerslistener = map.on('layers-add-result', function(e) {
-                        
-                         var ids = map.graphicsLayerIds;
-                         var layerholder = [];
-                         _layerslistener.remove();
-                         arrayUtils.forEach(ids, function(id) {
-                            var xxx = map.getLayer(id);
-                            if (xxx.loaded === true) {
-                                layerholder.push(xxx);
-                            } else {
-                                (function(callback) {
-                                var _singleListen = xxx.on('loaded', function(e) {
-                                    e.visible = true;
-                                    layerholder.push(e);
-                                    _singleListen.remove();
-                                    callback();
+                                var sum = function add(i) {
+                                    var cnt = 0;
+                                    arrayUtils.forEach(i, function(e) {
+                                        cnt += e;
                                     });
-                                })();
-                            }
-                        });
-                        offlineWidget.initPanZoomListeners();
-                        offlineWidget.layerholder = layerholder;
-                        // offlineWidget.initOfflineDatabase(offlineWidget.layerholder);
-                     });
+                                    return cnt;
+                                };
+                                var x = sum(i);
 
-                    var finalLayerList = polys.concat(lines.reverse(), points);
-                    // map.addLayers(polys.concat(lines.reverse(), points.slice(4,8)));
-                    map.addLayers(polys.concat(lines));
+                                if (i.length === index) {
+                                    var newlayerlist = [];
+                                    if (featureLayers.length > 0 && featureLayers.length === x) {
+                                        var layerholder = {
+                                            polys: {},
+                                            lines: {},
+                                            points:{}
+                                        };
+                                        arrayUtils.forEach(featureLayers, function(lyr) {
+                                            var layerid = lyr.layerId;
+                                            var geo = lyr.geometryType;
+                                            switch (geo) {
+                                                case "esriGeometryPolygon":
+                                                    layerholder.polys[layerid] = lyr;
+                                                    break;
+                                                case "esriGeometryPolyline":
+                                                    layerholder.lines[layerid] = lyr;
+                                                    break;
+                                                case "esriGeometryPoint":
+                                                    layerholder.points[layerid] = lyr;
+                                                    break;
+                                            }
+                                        });
 
+                                        var lists = [layerholder.polys, layerholder.lines, layerholder.points];
+                                        
+                                        var newlists = [[], [], []];
+                                        arrayUtils.forEach(lists, function(list) {
+                                            var keys = Object.keys(list);
+                                            keys.sort();
+                                            arrayUtils.forEach(keys, function(key) {
+                                                var item = lists.indexOf(list);
+                                                newlists[item].push(list[key]);
+                                            });
+                                        });
+                                        var finalLayerList = newlists[0].concat(newlists[1], newlists[2]);
+                                  
+
+                                        var _maplisten = map.on('layers-add-result', function(evt) {
+                                                _maplisten.remove();
+                                                offlineWidget.initOfflineDatabase(finalLayerList);
+                                        });
+                                        map.addLayers(finalLayerList);
+                                    }
+                                }
+                            });
+                           };
+
+                           queryLayer(layer);
+                       }
+                    });
                 });
+             });
             },
 
             init: function(params, callback) {
