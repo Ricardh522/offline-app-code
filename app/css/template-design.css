@@ -185,10 +185,7 @@ body {
 
 #homeButton,
 #esriLocate {
-    top: 5px;
-    -webkit-transform: scale(1.25, 1.25);
-    transform: scale(1.25, 1.25);
-    vertical-align: center
+    display: inline-block;
 }
 
 #img-offline-indicator {
@@ -198,22 +195,37 @@ body {
 
 #navbar {
     position: relative;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-flex-direction: row;
-    -ms-flex-direction: row;
-    flex-direction: row;
-    -webkit-justify-content: space-around;
-    -ms-flex-pack: distribute;
-    justify-content: space-around;
-    top: 0;
-    left: 0;
-    height: 33px;
-    margin-bottom: 2px;
     width: 100%;
-    padding: 2px
+    padding: 2px;
 }
+
+#buttons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+
+#buttons div {
+    margin: 2px;
+}
+
+#esriButtons {
+    display: flex;
+    flex-direction: row;
+}
+
+
+#offlineButtons {
+    display: flex;
+    position: relative;
+    justify-content: space-between;
+    width: 140px;
+}
+
 
 #title,
 #controllers {
@@ -229,13 +241,6 @@ paper-fab:active {
 button:focus,
 input:focus {
     outline: 0!important
-}
-
-#downloadButton,
-#clearButton {
-    -webkit-transform: scale(1.25, 1.25);
-    transform: scale(1.25, 1.25);
-    diplay: inline-block
 }
 
 #tools {

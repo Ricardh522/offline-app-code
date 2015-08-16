@@ -132,6 +132,7 @@ javascript/3.14/esri/geometry/Polygon.js
 javascript/3.14/esri/geometry/Extent.js
 javascript/3.14/esri/geometry/geometryEngine.js
 javascript/3.14/esri/tasks/QueryTask.js
+javascript/3.14/esri/tasks/query.js
 javascript/3.14/esri/tasks/RelationshipQuery.js
 javascript/3.14/esri/tasks/StatisticDefinition.js
 javascript/3.14/esri/tasks/ProjectParameters.js
@@ -187,6 +188,7 @@ javascript/3.14/dojo/dom-construct.js
 javascript/3.14/dojo/on.js
 javascript/3.14/dojo/NodeList-manipulate.js
 javascript/3.14/dojo/dom-style.js
+javascript/3.14/dojo/dom-class.js
 javascript/3.14/dojo/dom-attr.js
 javascript/3.14/dojo/dom-geometry.js
 javascript/3.14/dojo/_base/declare.js

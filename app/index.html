@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
-<!-- <html> -->
-<html manifest="appcache.manifest">
+<html>
+<!-- <html manifest="appcache.manifest"> -->
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
 <!-- meta tags to hide url and minimize status bar to give the web app
@@ -173,7 +173,7 @@ a native app look this only happens after app is saved to the desktop-->
 
     </script>
     
-    <script src= "javascript/3.14/init.js" data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets'}, {name:'utils', location:document.URL + 'javascript/utils'}], async: true">
+    <script src= "javascript/3.14/init.js" data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets'}, {name:'utils', location:document.URL + 'javascript/utils'}], async: true, isDebug: true">
     </script>
 
 
@@ -239,7 +239,7 @@ a native app look this only happens after app is saved to the desktop-->
             // var mapName = "Utilities";
             var mapName = "RSW/Utilities"
             var layersIndexes = [];
-            for (i = 22; i <= 27; i+=1) { 
+            for (i = 1; i <= 33; i+=1) { 
               layersIndexes.push(i);
             };
 
@@ -251,6 +251,8 @@ a native app look this only happens after app is saved to the desktop-->
                 mapService: mapService}, function(e) {
               console.log("offlineWidget was started");
             });
+
+            offlineWidget.layerIndexes = layersIndexes;
 
             var storedExtent = localStorage.offlineExtent;
             var mapExtent;
@@ -386,10 +388,26 @@ a native app look this only happens after app is saved to the desktop-->
         
         <div class="row" >
             <div  id="navbar" class="col-xs-12">
-                <div id="homeButton"></div>
-                <div id="esriLocate"></div>
-                <button type='button' id="downloadButton">Download</button>
-                <button type='button' id="clearButton">Clear</button>
+                <div id = "buttons">
+                  <div id = "esriButtons">
+                      <div id="homeButton"></div>
+                      <div id="esriLocate"></div>
+                  </div>
+                
+                  <div id = "offlineButtons" class = "btn-group" role="group" aria-label="imagery and feature download">
+                        <button type='button'  id="downloadTiles" class="btn btn-primary disabled">
+                          <span class= "glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
+                        </button>
+                        
+                        <button type='button' id="downloadFeatures" class='btn btn-default disabled'>
+                            <span class= "glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                        </button>
+
+                        <button type='button' id="clearButton" class="btn btn-default disabled">
+                             <span class= "glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>
+                        </button>
+                  </div>
+                </div>
             </div>
         </div>  
 
