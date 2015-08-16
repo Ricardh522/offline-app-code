@@ -1,10 +1,10 @@
-define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/dom", "dojo/dom-class", "dojo/on", "dojo/Deferred", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
+define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/dom", "dojo/dom-class", "dojo/on", "dojo/Deferred", "dojo/promise/all", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
     "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet","esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
-"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/arcgis/utils", "esri/graphicsUtils", "esri/geometry/geometryEngine", "esri/tasks/query", "esri/geometry/Point",
-  "esri/geometry/Polygon", "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color"],
-  function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet,
+"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/arcgis/utils", "esri/graphicsUtils", "esri/geometry/geometryEngine", "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Point",
+  "esri/geometry/Polygon", "esri/layers/LabelLayer", "esri/renderers/SimpleRenderer", "esri/renderers/smartMapping", "esri/symbols/TextSymbol", "esri/request", "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color"],
+  function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, all, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet,
    ArcGISDynamicMapServiceLayer, ImageParameters, Extent, PopupTemplate, FeatureLayer, arcgisUtils, graphicsUtils, geometryEngine,
-    Query, Point, Polygon, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
+    Query, QueryTask, Point, Polygon, LabelLayer, SimpleRenderer, smartMapping, TextSymbol, esriRequest, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
 
      return declare("OfflineWidget", [_WidgetBase], {   
 
@@ -83,6 +83,29 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     zoom = localStorage.offlineZoom;
                 }
 
+                (function () {
+                        request = indexedDB.open(DB_NAME, 11);
+                        request.onupgradeneeded = function(event) {
+                            var db = event.target.result;
+                            var store = db.createObjectStore(DB_STORE_NAME, {keyPath: 'id'});
+                            var index = store.createIndex("by_id", "id", {unique: true});
+                            editStore._isDBInit = true;
+                            db.close();
+                        };
+
+                        request.onsuccess = function(event) {
+                          db = event.target.result;
+                          editStore._isDBInit = true;
+                          db.close();
+                        };
+
+                        request.onerror = function() {
+                            editStore._isDBInit = false;
+                            console.log(request.error);
+                        };
+                    })();
+
+
                 $('#downloadTiles, #downloadFeatures, #clearButton').on('mousedown', function(e) {
                     e.preventDefault();
                     $(this).css('transform', 'scale(1.25, 1.25)');
@@ -119,20 +142,23 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                             var db = event.target.result;
                             var store = db.createObjectStore(DB_STORE_NAME, {keyPath: 'id'});
                             var index = store.createIndex("by_id", "id", {unique: true});
+                            editStore._isDBInit = true;
                             db.close();
                         };
 
                         request.onsuccess = function(event) {
                           db = event.target.result;
+                          editStore._isDBInit = true;
                           callback(db);
                         };
 
                         request.onerror = function() {
+                            editStore._isDBInit = false;
                             console.log(request.error);
                         };
                     };
 
-                    var getObjectStore = function (store_name, mode) {
+                    var getObjectStore = function (db, store_name, mode) {
                         
                         var tx = db.transaction(store_name, mode);
                         tx.onabort = function() {
@@ -143,9 +169,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                       };
 
                     
-                   function clearObjectStore() {
+                   function clearObjectStore(db) {
                         var deferred = new Deferred();
-                        var store = getObjectStore(DB_STORE_NAME, 'readwrite');
+                        var store = getObjectStore(db, DB_STORE_NAME, 'readwrite');
                         var req = store.clear();
 
                         req.onsuccess = function(evt) {
@@ -163,12 +189,11 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     openDb(null, function(e) {
                         db = e;
                         var map = offlineWidget.map;
-                        var process = clearObjectStore();
+                        var process = clearObjectStore(db);
                         process.then( function(results) {
                             var rem = function reCreate(callback) {
                                 db.close();
                                 offlineWidget.clearMap(null, function(e) {
-                                    map.graphics.clear();
                                     callback();
                                 });
                             };
@@ -192,7 +217,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
             /*Begin the process of downloading the feature services and collecting them in layerholder*/
 
-            startFeatureDownload: function(param) {
+            startFeatureDownload: function(param, callback) {
                 var downloadTiles = dom.byId('downloadTiles');
                 var downloadFeatures = dom.byId('downloadFeatures');
                 var clearButton = dom.byId('clearButton');
@@ -201,70 +226,67 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 var map = this.map;
                 var featureUrls = this.testUrls;
 
+                // function addGraphics(layer, callback) {
+                //     if (layer.name.indexOf("Main") !== -1) {
+                //         smartMapping.createTypeRenderer({
+                //             basemap: 'streets',
+                //             field: "Subtype",
+                //             layer: layer,
+                //             numTypes: -1,
+                //             theme: 'default'
+                //         }).then(function(typeRenderer) {
+                //             layer.setRenderer(typeRenderer.renderer);
 
-                var fireEvent = function(name, data) {
-                  var e = document.createEvent("Event");
-                  e.initEvent(name, true, true);
-                  e.data = data;
-                  window.dispatchEvent(e);
-                };
+                //             var label = new TextSymbol().setColor(new Color("#666"));
+                //             label.font.setSize("14pt.");
+                //             label.font.setFamily("arial");
+                //             var mainRenderer = new SimpleRenderer(label);
+                //             var mainLabel = new LabelLayer({ id: "labels" });
+                //             mainLabel.addFeatureLayer(layer, mainRenderer, "{Material Class}");
+                //             map.addLayer(mainLabel);
+                //             callback(layer);
+                //         });
+                //     } else {
+                //         callback(layer);
+                //     }
+                // }
 
-                var fetch = function(inputUrl, callback) {
-
-                    var xmlhttp = new XMLHttpRequest();
-                    var maxWaitTime = 10000;
-                    var noResponseTimer = setTimeout(function() {
-                        xmlhttp.abort();
-                        callback('failed');
-                        return;
-                    }, maxWaitTime);
-                
-                    xmlhttp.onreadystatechange = function() {
-                        var status = xmlhttp.status;
-                        if (this.readyState != 4) {
-                            return;
-                        } 
-
-                        if (this.readyState == 4 && this.status == 200) {
-                            fireEvent("goodconnection", {});
-                            clearTimeout(noResponseTimer);
-                            var rawresponse = xmlhttp.response;
-                            var response = JSON.parse(rawresponse);
-                            console.log(response);
-                            callback(response);
-                        } else {
-                            fireEvent("connectionerror", {});
-                        }
-                    };
-                    
-                    xmlhttp.open('GET', inputUrl, false);
-                    xmlhttp.send();
-
-                };
-
-                window.addEventListener("connectionerror", function(e) {
-                  alert("There is a connection error");
-                });
-
-                window.addEventListener("goodconnection", function(e) {
-                  console.log("There is a good connection");
-                });
-
-            
-                var polys = [];
-                var lines = [];
-                var points = [];
+          
                 offlineWidget.clearMap(null, function(evt) {
-
+                    
+                    var extent = map.extent;
+                    var i = [];
+                    var promises = [];
+                    var index = 0;
                     arrayUtils.forEach(featureUrls, function(item) {
-                        jsonUrl = item + '?f=json';
-                        fetch(jsonUrl, function(response) {
+                        var deferred = new Deferred();
+                        var request = new esriRequest({
+                            url: item,
+                            content: {f: "json"},
+                            handleAs: "json",
+                            callbackParamName: "callback"
+                        });
+                        request.then(function(response) {
                          if (response.type === "Feature Layer") {
+                            index += 1;
+                            var drawingInfo = response.drawingInfo;
+                            var geometryType = response.geometryType;
+                            var displayField = response.displayField;
+                            var typeIdField = response.typeIdField;
+                            var types = response.types;
+                            var fields = response.fields;
+                            var id = response.id;
+                            var name = response.name;
+                          
+                            // var queryTask = new QueryTask(item);
+                            var query = new Query();
+                            query.returnGeometry = false;
+                            //query.outFields = ["*"];
+                            query.geometry = extent;
+                            query.spatialRelationship = Query.SPATIAL_REL_INTERSECT;
                             // create the field info array for the feature layer
                             var fieldinfo = [];
-                            var fields = response.fields;
                             var count;
-                           
                             for (count=0; count < fields.length; count ++) {
                                 
                                 var f = fields.shift();
@@ -277,77 +299,106 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                 fieldinfo.push(entry);
                             }
 
-                                var popupTemplate = new PopupTemplate({
-                                    title: response.name,
-                                    fieldInfos: fieldinfo
-                                });
+                            var popupTemplate = new PopupTemplate({
+                                title: response.name,
+                                fieldInfos: fieldinfo
+                            });
 
-
-                                var xxx = new FeatureLayer(item, {
-                                     mode: FeatureLayer.MODE_ONDEMAND,
-                                     outFields: ["*"],
-                                     infoTemplate: popupTemplate,
-                                     visible: true,
-
-                                 });
-
-                            var geometries = graphicsUtils.getGeometries(xxx.graphics);
+                             var layer = new FeatureLayer(item, {
+                                mode: FeatureLayer.MODE_SNAPSHOT,
+                                infoTemplate: popupTemplate,
+                                outFields: ["*"],
+                                visible: true
+                            });
                             
-                               switch (response.geometryType) {
-                                    case "esriGeometryPolygon":
-                                        polys.push(xxx);
-                                        break;
-                                    case "esriGeometryPolyline":
-                                        lines.push(xxx);
-                                        break;
-                                    case "esriGeometryPoint":
-                                        points.push(xxx);
-                                        break;
-                               }
-
-                          } else if (response === "failed") {
-                                _isOnline = false;
-                                _isOffline = true;
-
-                                arrayUtils.forEach(buttons, function(e) {
-                                    if (domClass.contains(e, "disabled") === false) {
-                                        domClass.add(e, "disabled");
+                            var queryLayer = function(layer) {
+                                layer.queryIds(query, function(result) {
+                                console.log(result);
+                                if (result !== null) {
+                                    i.push(1);
+                                    layer.setDefinitionExpression("OBJECTID IN (" + result.join(',') + ")");
+                                    deferred.resolve(layer);
+                                } else {
+                                    i.push(0);
+                                    deferred.resolve(false);
                                     }
                                 });
-                            }
-                        });
-                    }); 
+                            };
+                            
+                            queryLayer(layer);
 
-                    var _layerslistener = map.on('layers-add-result', function(e) {
-                        
-                         var ids = map.graphicsLayerIds;
-                         var layerholder = [];
-                         _layerslistener.remove();
-                         arrayUtils.forEach(ids, function(id) {
-                            var xxx = map.getLayer(id);
-                            if (xxx.loaded === true) {
-                                layerholder.push(xxx);
-                            } else {
-                                (function(callback) {
-                                var _singleListen = xxx.on('loaded', function(e) {
-                                    e.visible = true;
-                                    layerholder.push(e);
-                                    _singleListen.remove();
-                                    callback();
-                                    });
-                                })();
-                            }
-                        });
-                        offlineWidget.initPanZoomListeners();
-                        offlineWidget.layerholder = layerholder;
-                        // offlineWidget.initOfflineDatabase(offlineWidget.layerholder);
-                     });
+                       } else {
+                        deferred.resolve(false);
+                       }
+                    });
 
-                    var finalLayerList = polys.concat(lines.reverse(), points);
-                    // map.addLayers(polys.concat(lines.reverse(), points.slice(4,8)));
-                    map.addLayers(polys.concat(lines));
-
+                    promises.push(deferred);
                 });
+
+                var allPromises  = all(promises);
+                allPromises.then(function(result) {
+                    var layerholder = {
+                        polys: {},
+                        lines: {},
+                        points:{}
+                    };
+                    arrayUtils.forEach(result, function(lyr) {
+                        var layerid = lyr.layerId;
+                        var geo = lyr.geometryType;
+                        switch (geo) {
+                            case "esriGeometryPolygon":
+                                layerholder.polys[layerid] = lyr;
+                                break;
+                            case "esriGeometryPolyline":
+                                layerholder.lines[layerid] = lyr;
+                                break;
+                            case "esriGeometryPoint":
+                                layerholder.points[layerid] = lyr;
+                                break;
+                        }
+                    });
+
+                    var lists = [layerholder.polys, layerholder.lines, layerholder.points];
+                    
+                    var newlists = [[], [], []];
+                    arrayUtils.forEach(lists, function(list) {
+                        var keys = Object.keys(list);
+                        keys.sort();
+                        arrayUtils.forEach(keys, function(key) {
+                            var item = lists.indexOf(list);
+                            newlists[item].push(list[key]);
+                        });
+                    });
+                    var finalLayerList = newlists[0].concat(newlists[1], newlists[2]);
+              
+
+                    var _maplisten = map.on('layers-add-result', function(evt) {
+                            _maplisten.remove();
+                            var promises = [];
+                            var ids = map.graphicsLayerIds;
+                            arrayUtils.forEach(ids, function(id) {
+                                    var deferred = new Deferred();
+                                    var layer = map.getLayer(id); 
+                                    if (layer.graphics.length === 0) {
+                                        console.log("graphics have not be created yet");
+                                        var _listen = layer.on('update-end', function(e) {
+                                            _listen.remove();
+                                           deferred.resolve(layer);
+                                        });
+                                     
+                                    } else if (layer.graphics.length > 0) {
+                                        deferred.resolve(layer);
+                                    }
+                                    promises.push(deferred);        
+                            });
+                            var allPromises = all(promises);
+                            allPromises.then(function(results) {
+                                 offlineWidget.initOfflineDatabase(results);       
+                            });
+                    });
+                    map.addLayers(finalLayerList);
+                });
+             });
             },
 
             init: function(params, callback) {
@@ -635,7 +686,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                     offlineWidget.buildDatabase(layerholder, function(e) {
                         console.log(e);
                         var clearNode = dom.byId("clearButton");
-                        var tileNode = dom.byId("downloadButton");
+                        var tileNode = dom.byId("downloadTiles");
                         var featureNode = dom.byId("downloadFeatures");
 
                         if(_isOnline === true){
@@ -644,13 +695,13 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                 offlineWidget.clearMap(null, function(e) {
                                     offlineWidget.displayMap();
                                     
-                                    domClass.add(tileNode, "disabled");
+                                    domClass.remove(tileNode, "disabled");
                                     domClass.remove(clearNode, "disabled");
+                                    domClass.remove(featureNode, "disabled");
                                 });
                             } else {
                                  offlineWidget.clearMap(null, function(e) {
                                     offlineWidget.loadOffline();
-                                    domClass.add(tileNode, "disabled");
                                 });
                             }
 
@@ -658,6 +709,8 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                              offlineWidget.clearMap(null, function(e) {
                                 offlineWidget.loadOffline();
                                 domClass.add(tileNode, "disabled");
+                                domClass.add(clearNode, "disabled");
+                                domClass.add(featureNode, "disabled");
                             });
                         }
                     });
@@ -715,11 +768,10 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                 loadOffline: function () {
                     var map = offlineWidget.map;
+                    var layerlist = [];
                     // retreive the features from indexedDB and load into the map
                      offlineWidget.initDB(function(e) {
-                            var layerlist = [];
                             var editStore = offlineWidget.editStore;
-                            var deferred = new Deferred();
                             var request = indexedDB.open(editStore.DB_NAME, 11);
                             request.onsuccess = function(event) {
                                     var map = offlineWidget.map;
@@ -727,18 +779,14 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                     var tx = db.transaction([editStore.DB_STORE_NAME], 'readonly');
                                     var store = tx.objectStore(editStore.DB_STORE_NAME);
                                     var index = store.index('by_id');
-
-                                 
                                     var request = index.openCursor(null, 'next');
                                         //retrieve each entry from the dataStore
                                     request.onsuccess = function(event) {
                                         var cursor = event.target.result;
                                         if (cursor) {
-                                                
+                                          
                                             var dataStore = cursor.value;
-
                                             var testLayer = new FeatureLayer(JSON.parse(dataStore.featureLayerCollection));
-
                                              // create the field info array for the feature layer
                                             var fieldinfo = [];
                                             var fields = testLayer.fields;
@@ -756,46 +804,51 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                                                     fieldinfo.push(entry);
                                             }
 
-                                            
                                             var popupTemplate = new PopupTemplate({
                                                 title: testLayer.name,
                                                 fieldInfos: fieldinfo
                                             });
-
                                             if(testLayer.url === null){
                                                 testLayer.url = dataStore.featureLayerUrl;
                                             }
-
                                             testLayer.infoTemplate = popupTemplate;
-                                            var _listener = map.on('layer-add-result', function(e) {
-                                                _listener.remove();
-                                                e.layer.visible = true;
-                                                e.layer.refresh();
-                                                cursor.continue();
-                                            });
-                                            offlineWidget.map.addLayer(testLayer, 1);
-                                            // layerlist.push(testLayer);
-                                            
-                                            
+                                            testLayer.visible = true;
+                                            layerlist.push(testLayer);
+
+                                       
+                                            cursor.continue();
                                         }
                                     };
 
                                     tx.oncomplete = function(evt) {
-                                        deferred.resolve("transaction completed collecting layers from store");
+                                      console.log("transaction completed collecting layers from store");
+                                      promises = [];
+                                      arrayUtils.forEach(layerlist, function(lyr) {
+                                        var deferred = new Deferred();
+                                        var visible = lyr.visible;
+                                        if (visible === true) {
+                                                deferred.resolve(true);
+                                            } else {
+                                                deferred.resolve(false);
+                                            }
+                                            promises.push(deferred);
+                                        });
+                                        var allPromises = all(promises);
+                                        allPromises.then(function(results) {
+                                            if (promises.indexOf(false) === -1) {
+                                                offlineWidget.map.addLayers(layerlist);
+                                            } else {
+                                                alert("layers not retreived from storage");
+                                            }
+                                        });
                                     };
-
-                                    //deferred.then(offlineWidget.map.addLayers(layerlist));
                                 };
 
                                 request.onerror = function() {
                                         alert("There was a problem retrieving feature layer options object. " + dataStore);
                                         callback(false);
                                 };
-
-
                             });
-
-                            
                 },
 
                 /**
@@ -866,19 +919,24 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
 
                                     var entries = [];
                                     arrayUtils.forEach(layerholder, function(layer) {
+                                        var deferred = new Deferred();
                                         var entry = myDataStore(layer);
-                                        entries.push(entry);
+                                        deferred.resolve(entry);
+                                        entries.push(deferred);
                                     });
                                     
                                     var tx = db.transaction(editStore.DB_STORE_NAME, 'readwrite');
                                     var store = tx.objectStore(editStore.DB_STORE_NAME);
 
-                                 
-                                    arrayUtils.forEach(entries, function(entry) {
-                                        console.log(entry);
-                                        store.put(entry);
-                                        console.log("entry put");
+                                    var allEntries = all(entries);
+                                    allEntries.then(function(results) {
+                                        arrayUtils.forEach(results, function(entry) {
+                                            console.log(entry);
+                                            store.put(entry);
+                                            console.log("entry put");
+                                        });
                                     });
+                                    
 
                                     tx.oncomplete = function() {
                                        deferred.resolve('all features loaded into indexedDB');

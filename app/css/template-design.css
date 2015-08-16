@@ -218,11 +218,12 @@ body {
     flex-direction: row;
 }
 
+
 #offlineButtons {
     display: flex;
     position: relative;
     justify-content: space-between;
-    width: 15%;
+    width: 140px;
 }
 
 
