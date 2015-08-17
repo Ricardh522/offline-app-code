@@ -98,6 +98,7 @@ javascript/3.14/esri/domUtils.js
 javascript/3.14/esri/symbols/SimpleMarkerSymbol.js
 javascript/3.14/esri/symbols/SimpleLineSymbol.js
 javascript/3.14/esri/symbols/SimpleFillSymbol.js
+javascript/3.14/esri/symbols/TextSymbol.js
 javascript/3.14/esri/symbols/PictureMarkerSymbol.js
 javascript/3.14/esri/symbols/SimpleFillSymbol.js
 javascript/3.14/esri/arcgis/OAuthInfo.js
