@@ -239,7 +239,7 @@ a native app look this only happens after app is saved to the desktop-->
             // var mapName = "Utilities";
             var mapName = "RSW/Utilities"
             var layersIndexes = [];
-            for (i = 1; i <= 33; i+=1) { 
+            for (i = 0; i <= 32; i+=1) { 
               layersIndexes.push(i);
             };
 
@@ -278,7 +278,7 @@ a native app look this only happens after app is saved to the desktop-->
             if (storedZoom  !== undefined) {
               zoom = storedZoom;
             } else {
-              zoom = 16
+              zoom = 15
             }
 
 
@@ -293,7 +293,7 @@ a native app look this only happens after app is saved to the desktop-->
                 isScrollWheelZoom: true,
                 force3DTransforms: true,
                 maxZoom: 19,
-                minZoom: 15,
+                minZoom: 14,
                 showLabels: true,
                 extent: mapExtent,
                 infoWindow: popup

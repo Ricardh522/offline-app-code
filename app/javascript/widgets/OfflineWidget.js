@@ -4,7 +4,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
   "esri/geometry/Polygon", "esri/layers/LabelLayer", "esri/renderers/SimpleRenderer", "esri/symbols/TextSymbol", "esri/request", "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color"],
   function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, all, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet,
    ArcGISDynamicMapServiceLayer, ImageParameters, Extent, PopupTemplate, FeatureLayer, arcgisUtils, graphicsUtils, geometryEngine,
-    Query, QueryTask, Point, Polygon, LabelLayer, SimpleRenderer, smartMapping, TextSymbol, esriRequest, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
+    Query, QueryTask, Point, Polygon, LabelLayer, SimpleRenderer, TextSymbol, esriRequest, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
 
      return declare("OfflineWidget", [_WidgetBase], {   
 
@@ -406,7 +406,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 var mapService = this.mapService;
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
                 map.addLayers([tileLayer,mapService]);
-
+                // map.addLayers([mapService]);
                 var splash = map.on('layers-add-result', initSplashPage);
                     
                 function initSplashPage(e) {
