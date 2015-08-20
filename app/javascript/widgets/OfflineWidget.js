@@ -11,16 +11,16 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
           "esri/tasks/QueryTask", "esri/geometry/Point",
   "esri/geometry/Polygon", "esri/layers/LabelLayer",
    "esri/renderers/SimpleRenderer", "esri/symbols/TextSymbol", "esri/request",
-    "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol",
-     "esri/symbols/SimpleLineSymbol", "esri/Color"],
+     "dojo/dom-construct", "esri/symbols/SimpleFillSymbol",
+     "esri/symbols/SimpleLineSymbol", "esri/Color", "esri/dijit/LayerList"],
   function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, all,
    debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, IdentifyTask,
   IdentifyParameters, IdentifyResult, OfflineMap, MyGraphics, OfflineTiles,
    FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters,  Extent,
     PopupTemplate, FeatureLayer, arcgisUtils, graphicsUtils, geometryEngine,
     Query, QueryTask, Point, Polygon, LabelLayer, SimpleRenderer, TextSymbol,
-     esriRequest, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol,
-    Color) { 
+     esriRequest, domConstruct, SimpleFillSymbol, SimpleLineSymbol,
+    Color, LayerList) { 
 
      return declare("OfflineWidget", [_WidgetBase], {   
 
@@ -294,7 +294,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                                 callbackParamName: "callback"
                             });
                             deferred.resolve(request);
-                            return deferred
+                            return deferred;
                         });
 
                         all(requests).then(function(results) {
@@ -331,7 +331,8 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
 
                                         var popupTemplate = new PopupTemplate({
                                             title: response.name,
-                                            fieldInfos: fieldinfo
+                                            fieldInfos: fieldinfo,
+                                            showAttachments: false
                                         });
 
                                         var url  = mapService + "/" + id;
@@ -375,6 +376,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
 
                             var _maplisten = map.on('layers-add-result', function(evt) {
                                 _maplisten.remove();
+                                toc.refresh();
                                 var promises = [];
                                 var ids = map.graphicsLayerIds;
                                 arrayUtils.forEach(ids, function(id) {
@@ -400,10 +402,30 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                                 var allPromises = all(promises);
                                 allPromises.then(function(results) {
                                     console.log(results);
-                                    offlineWidget.initOfflineDatabase(results);  
+                                    
+                                    //offlineWidget.initOfflineDatabase(results);  
                                 });
                             });
                             var layerlist = layerholder.polys.concat(layerholder.lines, layerholder.points);
+
+                            var tocLayers = [];
+                            for (i = 0; i < layerlist.length; i +=1) {
+                                var outlayer = {
+                                    layer: layerlist[i],
+                                    subLayers: true,
+                                    visibility: true
+                                }
+                                tocLayers.push(outlayer);
+                            }
+
+                              var toc = new LayerList({
+                                    layers: tocLayers,
+                                    map: offlineWidget.map,
+                                    removeUnderscores: true,
+                                    subLayers: true,
+                                }, "layerList");
+
+                              toc.startup();
                             map.addLayers(layerlist);
                         });
                     });

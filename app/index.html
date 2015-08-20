@@ -3,6 +3,7 @@
 <html>
 <!-- <html manifest="appcache.manifest"> -->
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
 <!-- meta tags to hide url and minimize status bar to give the web app
 a native app look this only happens after app is saved to the desktop-->
@@ -151,7 +152,7 @@ a native app look this only happens after app is saved to the desktop-->
     <link rel="stylesheet" href= "javascript/3.14/esri/css/esri.css">
 
     <link rel="stylesheet" href="css/bootstrapmap.min.css">
-    <link rel="stylesheet" href="css/template-design.css">
+ 
 
     <!--Include a reference to offline.js which detects online/offline conditions-->
     <script src="javascript/vendor/offline.min.js"></script>
@@ -180,7 +181,7 @@ a native app look this only happens after app is saved to the desktop-->
 
     <!-- Include a reference to IndexedDBShim for library to work on Safari 7.x -->
     <script src="javascript/vendor/IndexedDBShim.js"></script>
-  
+       <link rel="stylesheet" href="css/template-design.css">
     <script>
     require(["esri/tasks/query", "dojo/on", "dojo/parser", "esri/renderers/SimpleRenderer", "esri/dijit/BasemapGallery",
      "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color", "esri/dijit/PopupTemplate",
@@ -188,7 +189,7 @@ a native app look this only happens after app is saved to the desktop-->
       "esri/layers/FeatureLayer", "esri/geometry/Point", "dojo/dom-style", "dojo/dom-attr",
      "esri/graphic", "esri/layers/GraphicsLayer", "esri/symbols/PictureMarkerSymbol", "esri/dijit/HomeButton",
      "esri/dijit/Scalebar", "esri/layers/GeoRSSLayer", "esri/geometry/Extent", "esri/SpatialReference", "esri/layers/ImageParameters",
-     "esri/arcgis/OAuthInfo", "esri/IdentityManager", "esri/dijit/Legend", "esri/dijit/PopupMobile", "dojo/dom-construct",
+     "esri/arcgis/OAuthInfo", "esri/IdentityManager", "esri/dijit/Legend", "esri/dijit/Popup", "esri/dijit/PopupTemplate", "dojo/dom-construct",
       "esri/symbols/SimpleFillSymbol",
      // Custom Modules
      "javascript/utils/bootstrapmap.min.js", "utils/appCacheManager", "widgets/OfflineWidget",
@@ -196,7 +197,7 @@ a native app look this only happens after app is saved to the desktop-->
     function (Query, on, parser, SimpleRenderer, BasemapGallery, SimpleMarkerSymbol, SimpleLineSymbol, Color, PopupTemplate,
         arrayUtils, dom, query, LocateButton, ArcGISDynamicMapServiceLayer, FeatureLayer, Point, domStyle, domAttr,
         Graphic, GraphicsLayer, PictureMarkerSymbol, HomeButton, Scalebar,
-        GeoRSSLayer, Extent, SpatialReference, ImageParameters, OAuthInfo, esriId, Legend, PopupMobile, domConstruct,SimpleFillSymbol,
+        GeoRSSLayer, Extent, SpatialReference, ImageParameters, OAuthInfo, esriId, Legend, Popup,  PopupTemplate, domConstruct,SimpleFillSymbol,
         BootstrapMap, AppCacheManager, OfflineWidget) {
 
             var appCacheManager;
@@ -276,19 +277,29 @@ a native app look this only happens after app is saved to the desktop-->
             }
 
 
-            var popup = new PopupMobile(null, domConstruct.create("div", {id: "myPopup"}));
+           var popupOptions = {
+            markerSymbol: new SimpleMarkerSymbol("circle", 32, null, new Color([0, 0, 0, 0.25])),
+            fillSymbol: new SimpleFillSymbol(SimpleFillSymbol.STYLE_CROSS,
+                             new SimpleLineSymbol(SimpleLineSymbol.STYLE_DASHDOT, new Color([255,0,0]), 2),
+                              new Color([255,255,0,0.25])
+                              )};
+
+        
+
+          //create a popup to replace the map's info window
+          var popup = new Popup(popupOptions, domConstruct.create("div"));
 
             var map = BootstrapMap.create("mapDiv", {
                 center: centerPnt,
                 zoom: zoom,
-                sliderStyle: "small",
+                sliderStyle: "none",
                 logo: false,
                 fadeOnZoom: true,
                 isScrollWheelZoom: true,
                 force3DTransforms: true,
                 maxZoom: 19,
                 minZoom: 14,
-                showLabels: true,
+                showLabels: false,
                 extent: mapExtent,
                 infoWindow: popup
             });
@@ -321,7 +332,7 @@ a native app look this only happens after app is saved to the desktop-->
              function initScalebar() {
                 scalebar = new Scalebar({
                     map: map,
-                    scalebarStyle: "ruler"
+                    scalebarUnit: "dual"
                 }, dojo.byId('scalebarHousing'));
             }
 
@@ -331,19 +342,10 @@ a native app look this only happens after app is saved to the desktop-->
                     autoUpdate: true,
                     map: map,
                     respectCurrentMapScale: true
-            }, "legendDiv");
-                $('#legendHousing').on('click', function(e) {
-                    if ($('#legendDiv').css('visibility') === 'visible') {
-                        $('#legendDiv').css('visibility', 'hidden');
-                         $('#legendHousing').css('transform', 'translate(70%, 80%)');
-                    } else {
-                        $('#legendDiv').css('visibility', 'visible');
-                        $('#legendHousing').css('transform', 'translate(0%, 0%)');
-                    }
-                });
+                    }, "legendDiv");
 
-                 legend.startup();
-            }
+                    legend.startup();
+                  }
 
              map.on('load', function(e) {
                  initScalebar();
@@ -370,48 +372,47 @@ a native app look this only happens after app is saved to the desktop-->
         <img id="logo" src="images/logo-rsw.png" />
     </div>
     <!--Map Page-->
-
-    <div class="container-fluid">
         
-        <div class="row" >
-            <div  id="navbar" class="col-xs-12">
-                <div id = "buttons">
-                  <div id = "esriButtons">
-                      <div id="homeButton"></div>
-                      <div id="esriLocate"></div>
-                  </div>
+        <div id = "buttons">
+          <div id = "esriButtons">
+              <div id="homeButton"></div>
+              <div id="esriLocate"></div>
+          </div>
+        
+          <div id = "offlineButtons" class = "btn-group" role="group" aria-label="imagery and feature download">
+                <button type='button'  id="downloadTiles" class="btn btn-primary disabled">
+                  <span class= "glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
+                </button>
                 
-                  <div id = "offlineButtons" class = "btn-group" role="group" aria-label="imagery and feature download">
-                        <button type='button'  id="downloadTiles" class="btn btn-primary disabled">
-                          <span class= "glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
-                        </button>
-                        
-                        <button type='button' id="downloadFeatures" class='btn btn-default disabled'>
-                            <span class= "glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-                        </button>
+                <button type='button' id="downloadFeatures" class='btn btn-default disabled'>
+                    <span class= "glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                </button>
 
-                        <button type='button' id="clearButton" class="btn btn-default disabled">
-                             <span class= "glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>
-                        </button>
-                  </div>
-                </div>
-            </div>
-        </div>  
+                <button type='button' id="clearButton" class="btn btn-default disabled">
+                     <span class= "glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>
+                </button>
+          </div>
+      </div>
+          
+      <div class="container-fluid">   
+          <div id="mapDiv"></div>
+      </div>
+   
 
-        <div id="main" class="row">
-            <div class="col-xs-12">
-                <div id="mapDiv">
-                    <div id='scalebarHousing'></div>
-                </div>
-                <div id="legendHousing" class="touch-moveable">
-                    <span>Legend</span>
-                    <div id="legendDiv" style="visibility: hidden"></div>
-                </div>
-
-            </div>
+        <div id='scalebarHousing'></div>
+        <div id="infoPanel">
+          <div id="panels"class="touch-moveable">
+            <div id="layerListHousing" class="touch-moveable">
+                  <span>Layers</span>
+                  <div id='layerList'></div>
+              </div>
+              <div id="legendHousing" class="touch-moveable">
+                  <span>Legend</span>
+                  <div id="legendDiv"></div>
+              </div>
+          </div>
         </div>
-    </div>
-    
-    
+        
+
 </body>
 </html>
