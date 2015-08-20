@@ -1,17 +1,32 @@
-define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "dojo/dom", "dojo/dom-class", "dojo/on", "dojo/Deferred", "dojo/promise/all", "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
-    "dijit/_WidgetBase", "widgets/OfflineMap", "widgets/OfflineTiles", "esri/tasks/FeatureSet","esri/layers/ArcGISDynamicMapServiceLayer", "esri/layers/ImageParameters",
-"esri/geometry/Extent", "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/arcgis/utils", "esri/graphicsUtils", "esri/geometry/geometryEngine", "esri/tasks/query", "esri/tasks/QueryTask", "esri/geometry/Point",
-  "esri/geometry/Polygon", "esri/layers/LabelLayer", "esri/renderers/SimpleRenderer", "esri/symbols/TextSymbol", "esri/request", "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color"],
-  function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, all, debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, OfflineMap, OfflineTiles, FeatureSet,
-   ArcGISDynamicMapServiceLayer, ImageParameters, Extent, PopupTemplate, FeatureLayer, arcgisUtils, graphicsUtils, geometryEngine,
-    Query, QueryTask, Point, Polygon, LabelLayer, SimpleRenderer, TextSymbol, esriRequest, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol, Color) { 
+define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
+  "dojo/dom", "dojo/dom-class", "dojo/on", "dojo/Deferred", "dojo/promise/all",
+   "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
+    "dijit/_WidgetBase", "esri/tasks/IdentifyTask", "esri/tasks/IdentifyParameters",
+     "esri/tasks/IdentifyResult","widgets/OfflineMap", "widgets/MyGraphics",
+      "widgets/OfflineTiles", "esri/tasks/FeatureSet",
+      "esri/layers/ArcGISDynamicMapServiceLayer",
+       "esri/layers/ImageParameters", "esri/geometry/Extent",
+        "esri/dijit/PopupTemplate", "esri/layers/FeatureLayer", "esri/arcgis/utils",
+         "esri/graphicsUtils", "esri/geometry/geometryEngine", "esri/tasks/query",
+          "esri/tasks/QueryTask", "esri/geometry/Point",
+  "esri/geometry/Polygon", "esri/layers/LabelLayer",
+   "esri/renderers/SimpleRenderer", "esri/symbols/TextSymbol", "esri/request",
+    "esri/dijit/PopupMobile", "dojo/dom-construct", "esri/symbols/SimpleFillSymbol",
+     "esri/symbols/SimpleLineSymbol", "esri/Color"],
+  function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, all,
+   debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, IdentifyTask,
+  IdentifyParameters, IdentifyResult, OfflineMap, MyGraphics, OfflineTiles,
+   FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters,  Extent,
+    PopupTemplate, FeatureLayer, arcgisUtils, graphicsUtils, geometryEngine,
+    Query, QueryTask, Point, Polygon, LabelLayer, SimpleRenderer, TextSymbol,
+     esriRequest, PopupMobile, domConstruct, SimpleFillSymbol, SimpleLineSymbol,
+    Color) { 
 
      return declare("OfflineWidget", [_WidgetBase], {   
 
      
             indexes: [],
             map: "",
-            testUrls: [],
             onlineTest: "",
             editStore: {DB_NAME:"features_store",  
                         DB_STORE_NAME:  "features",
@@ -222,185 +237,179 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",  "d
                 var downloadFeatures = dom.byId('downloadFeatures');
                 var clearButton = dom.byId('clearButton');
                 var buttons = [downloadTiles, downloadFeatures, clearButton];
-
                 var map = this.map;
-                var featureUrls = this.testUrls;
+                var mapService = this.mapService.url;
 
-                // function addGraphics(layer, callback) {
-                //     if (layer.name.indexOf("Main") !== -1) {
-                //         smartMapping.createTypeRenderer({
-                //             basemap: 'streets',
-                //             field: "Subtype",
-                //             layer: layer,
-                //             numTypes: -1,
-                //             theme: 'default'
-                //         }).then(function(typeRenderer) {
-                //             layer.setRenderer(typeRenderer.renderer);
-
-                //             var label = new TextSymbol().setColor(new Color("#666"));
-                //             label.font.setSize("14pt.");
-                //             label.font.setFamily("arial");
-                //             var mainRenderer = new SimpleRenderer(label);
-                //             var mainLabel = new LabelLayer({ id: "labels" });
-                //             mainLabel.addFeatureLayer(layer, mainRenderer, "{Material Class}");
-                //             map.addLayer(mainLabel);
-                //             callback(layer);
-                //         });
-                //     } else {
-                //         callback(layer);
-                //     }
-                // }
-
-          
-                offlineWidget.clearMap(null, function(evt) {
-                    
-                    var extent = map.extent;
-                    var i = [];
-                    var promises = [];
-                    var index = 0;
-                    arrayUtils.forEach(featureUrls, function(item) {
-                        var deferred = new Deferred();
-                        var request = new esriRequest({
-                            url: item,
-                            content: {f: "json"},
-                            handleAs: "json",
-                            callbackParamName: "callback"
-                        });
-                        request.then(function(response) {
-                         if (response.type === "Feature Layer") {
-                            index += 1;
-                            var drawingInfo = response.drawingInfo;
-                            var geometryType = response.geometryType;
-                            var displayField = response.displayField;
-                            var typeIdField = response.typeIdField;
-                            var types = response.types;
-                            var fields = response.fields;
-                            var id = response.id;
-                            var name = response.name;
-                          
-                            // var queryTask = new QueryTask(item);
-                            var query = new Query();
-                            query.returnGeometry = false;
-                            //query.outFields = ["*"];
-                            query.geometry = extent;
-                            query.spatialRelationship = Query.SPATIAL_REL_INTERSECT;
-                            // create the field info array for the feature layer
-                            var fieldinfo = [];
-                            var count;
-                            for (count=0; count < fields.length; count ++) {
-                                
-                                var f = fields.shift();
-                                var entry = {
-                                    fieldName: f.name,
-                                    label: f.alias,
-                                    visible: true
-                                };
-
-                                fieldinfo.push(entry);
-                            }
-
-                            var popupTemplate = new PopupTemplate({
-                                title: response.name,
-                                fieldInfos: fieldinfo
+                 function labelLayers(lyr, callback) {
+                    if (lyr.geometryType === 'esriGeometryPolyline') {
+                        var myGraphics = new MyGraphics();
+                        var forceMainLabel = "{DIAMETER} {MATERIAL} {MATERIALCLASS} {ITEMDESCRIPTION}";
+                        var gravityMainLabel = "{DIAMETER} {MATERIAL} {MATERIALCLASS} @ {SLOPE} %"; 
+                        var reclaimMainLabel = "{DIAMETER} {MATERIAL}";
+                        var pressurizedMainLabel = "{DIAMETER} {MATERIAL} {MATERIALCLASS} {ITEMDESCRIPTION}";
+                        var needLabel = {
+                            "RECLAIM MAIN": reclaimMainLabel,
+                            "GRAVITY MAIN": gravityMainLabel,
+                            "FORCE MAIN": forceMainLabel,
+                            "PRESSURIZED MAIN": pressurizedMainLabel
+                        };
+                        var name = lyr.name.toUpperCase();
+                        var keys = Object.keys(needLabel);
+                        if (keys.indexOf(name) !== -1) {
+                            var label = needLabel.name;
+                            myGraphics.labelLayer(label, lyr, function(e) {
+                                callback(lyr);
                             });
+                        }
+                    } else {
+                        callback(lyr);
+                        }
+                    }
 
-                             var layer = new FeatureLayer(item, {
-                                mode: FeatureLayer.MODE_SNAPSHOT,
-                                infoTemplate: popupTemplate,
-                                outFields: ["*"],
-                                visible: true
-                            });
-                            
-                            var queryLayer = function(layer) {
-                                layer.queryIds(query, function(result) {
-                                console.log(result);
-                                if (result !== null) {
-                                    i.push(1);
-                                    layer.setDefinitionExpression("OBJECTID IN (" + result.join(',') + ")");
-                                    deferred.resolve(layer);
-                                } else {
-                                    i.push(0);
-                                    deferred.resolve(false);
-                                    }
-                                });
-                            };
-                            
-                            queryLayer(layer);
-
-                       } else {
-                        deferred.resolve(false);
-                       }
-                    });
-
-                    promises.push(deferred);
-                });
-
-                var allPromises  = all(promises);
-                allPromises.then(function(result) {
-                    var layerholder = {
-                        polys: {},
-                        lines: {},
-                        points:{}
-                    };
-                    arrayUtils.forEach(result, function(lyr) {
-                        var layerid = lyr.layerId;
-                        var geo = lyr.geometryType;
-                        switch (geo) {
-                            case "esriGeometryPolygon":
-                                layerholder.polys[layerid] = lyr;
-                                break;
-                            case "esriGeometryPolyline":
-                                layerholder.lines[layerid] = lyr;
-                                break;
-                            case "esriGeometryPoint":
-                                layerholder.points[layerid] = lyr;
-                                break;
+                function setLayerDef (layer, query, callback) {
+                    layer.queryIds(query, function(oids) {
+                        if (oids) {
+                            layer.setDefinitionExpression("OBJECTID IN (" + oids.join(',') + ")");
+                            callback(layer);
+                        } else {
+                            callback(false);
                         }
                     });
+                }
 
-                    var lists = [layerholder.polys, layerholder.lines, layerholder.points];
+                offlineWidget.clearMap(null, function(evt) {
                     
-                    var newlists = [[], [], []];
-                    arrayUtils.forEach(lists, function(list) {
-                        var keys = Object.keys(list);
-                        keys.sort();
-                        arrayUtils.forEach(keys, function(key) {
-                            var item = lists.indexOf(list);
-                            newlists[item].push(list[key]);
+                      var extent = map.extent;
+                      var i = [];
+                      var index = 0;
+                      var visibleLayers = offlineWidget.mapService.visibleLayers;
+
+                        var requests = arrayUtils.map(visibleLayers, function(id) {
+                            var deferred = new Deferred();
+                            var item = mapService + "/" + id;
+                            var request = new esriRequest({
+                                url: item,
+                                content: {f: "json"},
+                                handleAs: "json",
+                                callbackParamName: "callback"
+                            });
+                            deferred.resolve(request);
+                            return deferred
+                        });
+
+                        all(requests).then(function(results) {
+                            var layerlist = [];
+                            var layerholder = {
+                                    polys: [],
+                                    lines: [],
+                                    points:[],
+                                    labels: []
+                                };
+                                    
+                            var mapArray = arrayUtils.map(results, function(request) {
+                                var deferred = new Deferred();
+                                 request.then(function(response) {
+                                    if (response.type === "Feature Layer") {
+                                        var id = response.id;
+                                        var geo = response.geometryType;
+                                        
+                                        var fields = response.fields;
+                                        // create the field info array for the feature layer
+                                        var fieldinfo = [];
+                                        var count;
+                                        for (count=0; count < fields.length; count ++) {
+                                    
+                                                var f = fields.shift();
+                                                var entry = {
+                                                    fieldName: f.name,
+                                                    label: f.alias,
+                                                    visible: true
+                                                };
+
+                                                fieldinfo.push(entry);
+                                        }
+
+                                        var popupTemplate = new PopupTemplate({
+                                            title: response.name,
+                                            fieldInfos: fieldinfo
+                                        });
+
+                                        var url  = mapService + "/" + id;
+                                         var layer = new FeatureLayer(url, {
+                                            mode: FeatureLayer.MODE_SNAPSHOT,
+                                            infoTemplate: popupTemplate,
+                                            outFields: ["*"],
+                                            visible: true
+                                        });
+                        
+                                        var query = new Query();
+                                        query.geometry = extent;
+                                        query.returnGeometry = false;
+
+                                        setLayerDef(layer, query, function(e) {
+                                            if (e !== false) {
+                                                switch (geo) {
+                                                    case "esriGeometryPolygon":
+                                                        layerholder.polys.push(e);
+                                                        break;
+                                                    case "esriGeometryPolyline":
+                                                        layerholder.lines.push(e);
+                                                        break;
+                                                    case "esriGeometryPoint":
+                                                        layerholder.points.push(e);
+                                                        break;
+                                                    }
+                                                    deferred.resolve(true);
+                                                } else {
+                                                    deferred.resolve(false);
+                                                }
+                                            }); 
+                                        } else {
+                                            deferred.resolve(false);
+                                        }
+                                    });
+                                    return deferred.promise;
+                                });
+
+                        all(mapArray).then(function(result) {
+
+                            var _maplisten = map.on('layers-add-result', function(evt) {
+                                _maplisten.remove();
+                                var promises = [];
+                                var ids = map.graphicsLayerIds;
+                                arrayUtils.forEach(ids, function(id) {
+                                        var deferred = new Deferred();
+                                        var layer = map.getLayer(id); 
+                                        if (layer.graphics.length === 0) {
+                                            console.log("graphics have not be created yet");
+                                            var _listen = layer.on('update-end', function(e) {
+                                                _listen.remove();
+                                                labelLayers(layer, function(e) {
+                                                     deferred.resolve(e);
+                                                });
+                                            });
+                                         } else if (layer.graphics.length > 0) {
+                                            labelLayers(layer, function(e) {
+                                                 deferred.resolve(e);
+                                            });
+
+                                        }
+                                        promises.push(deferred);        
+                                });
+
+                                var allPromises = all(promises);
+                                allPromises.then(function(results) {
+                                    console.log(results);
+                                    offlineWidget.initOfflineDatabase(results);  
+                                });
+                            });
+                            var layerlist = layerholder.polys.concat(layerholder.lines, layerholder.points);
+                            map.addLayers(layerlist);
                         });
                     });
-                    var finalLayerList = newlists[0].concat(newlists[1], newlists[2]);
-              
-
-                    var _maplisten = map.on('layers-add-result', function(evt) {
-                            _maplisten.remove();
-                            var promises = [];
-                            var ids = map.graphicsLayerIds;
-                            arrayUtils.forEach(ids, function(id) {
-                                    var deferred = new Deferred();
-                                    var layer = map.getLayer(id); 
-                                    if (layer.graphics.length === 0) {
-                                        console.log("graphics have not be created yet");
-                                        var _listen = layer.on('update-end', function(e) {
-                                            _listen.remove();
-                                           deferred.resolve(layer);
-                                        });
-                                     
-                                    } else if (layer.graphics.length > 0) {
-                                        deferred.resolve(layer);
-                                    }
-                                    promises.push(deferred);        
-                            });
-                            var allPromises = all(promises);
-                            allPromises.then(function(results) {
-                                 offlineWidget.initOfflineDatabase(results);       
-                            });
-                    });
-                    map.addLayers(finalLayerList);
                 });
-             });
             },
-
+          
             init: function(params, callback) {
                 var map = offlineWidget.map;
                 var mapService = this.mapService;
