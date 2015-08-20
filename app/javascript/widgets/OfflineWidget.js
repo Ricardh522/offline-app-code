@@ -239,6 +239,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                 var buttons = [downloadTiles, downloadFeatures, clearButton];
                 var map = this.map;
                 var mapService = this.mapService.url;
+
                  function labelLayers(lyr, callback) {
                     if (lyr.geometryType === 'esriGeometryPolyline') {
                         var myGraphics = new MyGraphics();
@@ -265,70 +266,50 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                         }
                     }
 
+                function setLayerDef (layer, query, callback) {
+                    layer.queryIds(query, function(oids) {
+                        if (oids) {
+                            layer.setDefinitionExpression("OBJECTID IN (" + oids.join(',') + ")");
+                            callback(layer);
+                        } else {
+                            callback(false);
+                        }
+                    });
+                }
+
                 offlineWidget.clearMap(null, function(evt) {
                     
-                    var extent = map.extent;
-                    var i = [];
-                    var index = 0;
-                   
-                    var idTask = new IdentifyTask(mapService);
-                    var idParams = new IdentifyParameters();
-                    idParams.geometry = extent;
-                    idParams.layerOption = IdentifyParameters.LAYER_OPTION_VISIBLE;
-                    idParams.mapExtent = extent;
-                    idParams.returnGeometry = false;
-                    idParams.tolerance = 3;
-                    
-                    idTask.execute(idParams, function(success) {
-                            successfull(success);
-                        }, function (error) {
-                            console.log(error.message);
-                            }); 
+                      var extent = map.extent;
+                      var i = [];
+                      var index = 0;
+                      var visibleLayers = offlineWidget.mapService.visibleLayers;
 
-                    function successfull(success) {                        
-                        var keys = Object.keys(success);
-                        var promises = [];
-                        var layerIds = [];
-                        arrayUtils.forEach(keys, function(key) {
+                        var requests = arrayUtils.map(visibleLayers, function(id) {
                             var deferred = new Deferred();
-                            var layerId = success[key].layerId;
-                            if (layerIds.indexOf(layerId) === -1) {
-                                layerIds.push(layerId);
-                                deferred.resolve(true);
-                         } else {
-                            deferred.resolve(false);
-                         }
-                         promises.push(deferred);
-                         });
-                            
-                        var allPromises = all(promises);
-                        allPromises.then(function(result) {
-                        
-                            var requests = arrayUtils.map(layerIds, function(id) {
-                                var deferred = new Deferred();
-                                var item = mapService + "/" + id;
-                                var request = new esriRequest({
-                                    url: item,
-                                    content: {f: "json"},
-                                    handleAs: "json",
-                                    callbackParamName: "callback"
-                                });
-                                deferred.resolve(request);
-                                return deferred
+                            var item = mapService + "/" + id;
+                            var request = new esriRequest({
+                                url: item,
+                                content: {f: "json"},
+                                handleAs: "json",
+                                callbackParamName: "callback"
                             });
+                            deferred.resolve(request);
+                            return deferred
+                        });
 
-                            all(requests).then(function(results) {
-                                var layerlist = [];
-                                var layerholder = {
-                                        polys: [],
-                                        lines: [],
-                                        points:[],
-                                        labels: []
-                                    };
-                                        
-                                var mapArray = arrayUtils.map(results, function(request) {
-                                    var deferred = new Deferred();
-                                     request.then(function(response) {
+                        all(requests).then(function(results) {
+                            var layerlist = [];
+                            var layerholder = {
+                                    polys: [],
+                                    lines: [],
+                                    points:[],
+                                    labels: []
+                                };
+                                    
+                            var mapArray = arrayUtils.map(results, function(request) {
+                                var deferred = new Deferred();
+                                 request.then(function(response) {
+                                    if (response.type === "Feature Layer") {
                                         var id = response.id;
                                         var geo = response.geometryType;
                                         
@@ -365,70 +346,67 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                                         query.geometry = extent;
                                         query.returnGeometry = false;
 
-                                        function setLayerDef (layer, callback) {
-                                            layer.queryIds(query, function(oids) {
-                                                layer.setDefinitionExpression("OBJECTID IN (" + oids.join(',') + ")");
-                                                callback(layer);
-                                            });
-                                        }
-
-                                        setLayerDef(layer, function(e) {
-                                            switch (geo) {
-                                                case "esriGeometryPolygon":
-                                                    layerholder.polys.push(e);
-                                                    break;
-                                                case "esriGeometryPolyline":
-                                                    layerholder.lines.push(e);
-                                                    break;
-                                                case "esriGeometryPoint":
-                                                    layerholder.points.push(e);
-                                                    break;
+                                        setLayerDef(layer, query, function(e) {
+                                            if (e !== false) {
+                                                switch (geo) {
+                                                    case "esriGeometryPolygon":
+                                                        layerholder.polys.push(e);
+                                                        break;
+                                                    case "esriGeometryPolyline":
+                                                        layerholder.lines.push(e);
+                                                        break;
+                                                    case "esriGeometryPoint":
+                                                        layerholder.points.push(e);
+                                                        break;
+                                                    }
+                                                    deferred.resolve(true);
+                                                } else {
+                                                    deferred.resolve(false);
                                                 }
-                                                deferred.resolve(true);
                                             }); 
-                                        });
-                                        return deferred.promise;
+                                        } else {
+                                            deferred.resolve(false);
+                                        }
                                     });
+                                    return deferred.promise;
+                                });
 
-                            all(mapArray).then(function(result) {
+                        all(mapArray).then(function(result) {
 
-                                var _maplisten = map.on('layers-add-result', function(evt) {
-                                    _maplisten.remove();
-                                    var promises = [];
-                                    var ids = map.graphicsLayerIds;
-                                    arrayUtils.forEach(ids, function(id) {
-                                            var deferred = new Deferred();
-                                            var layer = map.getLayer(id); 
-                                            if (layer.graphics.length === 0) {
-                                                console.log("graphics have not be created yet");
-                                                var _listen = layer.on('update-end', function(e) {
-                                                    _listen.remove();
-                                                    labelLayers(layer, function(e) {
-                                                         deferred.resolve(e);
-                                                    });
-                                                });
-                                             } else if (layer.graphics.length > 0) {
+                            var _maplisten = map.on('layers-add-result', function(evt) {
+                                _maplisten.remove();
+                                var promises = [];
+                                var ids = map.graphicsLayerIds;
+                                arrayUtils.forEach(ids, function(id) {
+                                        var deferred = new Deferred();
+                                        var layer = map.getLayer(id); 
+                                        if (layer.graphics.length === 0) {
+                                            console.log("graphics have not be created yet");
+                                            var _listen = layer.on('update-end', function(e) {
+                                                _listen.remove();
                                                 labelLayers(layer, function(e) {
                                                      deferred.resolve(e);
                                                 });
+                                            });
+                                         } else if (layer.graphics.length > 0) {
+                                            labelLayers(layer, function(e) {
+                                                 deferred.resolve(e);
+                                            });
 
-                                            }
-                                            promises.push(deferred);        
-                                    });
-
-                                    var allPromises = all(promises);
-                                    allPromises.then(function(results) {
-                                        console.log(results);
-                                        offlineWidget.initOfflineDatabase(results);  
-                                    });
+                                        }
+                                        promises.push(deferred);        
                                 });
 
-                                var layerlist = layerholder.polys.concat(layerholder.lines, layerholder.points);
-                                map.addLayers(layerlist);
+                                var allPromises = all(promises);
+                                allPromises.then(function(results) {
+                                    console.log(results);
+                                    offlineWidget.initOfflineDatabase(results);  
+                                });
                             });
+                            var layerlist = layerholder.polys.concat(layerholder.lines, layerholder.points);
+                            map.addLayers(layerlist);
                         });
-                        });
-                    }
+                    });
                 });
             },
           
