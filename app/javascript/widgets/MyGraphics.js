@@ -1,25 +1,32 @@
-define("dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "dojo/_base/array", "dojo/dom", "dojo/dom-construct",
+define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "dojo/_base/array", "dojo/dom", "dojo/dom-construct",
  "dojo/dom-class", "dojo/Deferred", "dojo/promise/all",  "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
     "dijit/_WidgetBase", "esri/tasks/FeatureSet","esri/layers/ArcGISDynamicMapServiceLayer",
      "esri/layers/ImageParameters", "esri/geometry/Extent", "esri/layers/FeatureLayer", "esri/arcgis/utils",
      "esri/graphicsUtils", "esri/geometry/geometryEngine", "esri/tasks/query", "esri/tasks/QueryTask",
       "esri/geometry/Point", "esri/geometry/Polygon", "esri/layers/LabelLayer", "esri/renderers/SimpleRenderer",
        "esri/renderers/smartMapping", "esri/symbols/TextSymbol", "esri/request",  "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol", 
-       "esri/Color"], function(declare, parser, ready on, arrayUtils, dom, domConstruct, domClass, deferred, all, webMercatorUtils, Geoprocessor,
+       "esri/Color"], function(declare, parser, ready, on, arrayUtils, dom, domConstruct, domClass, deferred, all, webMercatorUtils, Geoprocessor,
                                _WidgetBase, FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters, Extent, FeatureLayer, arcgisUtils, graphicsUtils,
                                geometryEngine, Query, QueryTask, Point, Polygon, LabelLayer, SimpleRenderer, smartMapping, TextSymbol, esriRequest, SimpleFillSymbol, 
-                               SimpleLineSymbol) {
+                               SimpleLineSymbol, Color) {
 
-           return declare("addGraphics", [_WidgetBase], {
+           return declare("MyGraphics", [_WidgetBase], {
 
-                    labelLayer: function(inlayer, callback) {
-                            var label = new TextSymbol().setColor(new Color("#666"));
-                            label.font.setSize("14pt.");
-                            label.font.setFamily("arial");
-                            var mainRenderer = new SimpleRenderer(label);
-                            var mainLabel = new LabelLayer({ id: "labels" });
-                            mainLabel.addFeatureLayer(layer, mainRenderer, "{Material Class}");
-                            callback(mainLabel);    
+                    labelLayer: function(exp, inlayer, callback) {
+                        var map = offlineWidget.map;
+                        var label = new TextSymbol().setColor(new Color("#666"));
+                        label.font.setSize("14pt.");
+                        label.font.setFamily("arial");
+                        var mainRenderer = new SimpleRenderer(label);
+                        var mainLabel = new LabelLayer({ id: "labels_" + inlayer.name});
+                        mainLabel.addFeatureLayer(inlayer, mainRenderer, exp);
+                        var _listen = map.on('layer-add-result', function(e) {
+                            _listen.remove();
+                            callback();
+                        });
+
+                        map.addLayer(mainLabel);
+                            
                     },
 
                     addSmartMapping: function(map, layer, callback) {
@@ -43,19 +50,35 @@ define("dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on", "dojo/_bas
 
                     },
 
-                    Colors: {},
+                    Colors: {
 
-                    Lines: {},
+                    },
 
-                    Circles: {},
+                    Lines: {
 
-                    Polygons: {},
+                    },
 
-                    Points: {},
+                    Circles: {
 
-                    Markers: {},
+                    },
 
-                    fillSymbols: {},
+                    Polygons: {
+
+                    },
+
+                    Points: {
+
+                    },
+
+                    Markers: {
+
+                    },
+
+                    fillSymbols: {
+
+                    }
+        });
+});
 
                     
                                     

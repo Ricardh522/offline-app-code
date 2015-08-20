@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
-<!-- <html> -->
-<html manifest="appcache.manifest">
+<html>
+<!-- <html manifest="appcache.manifest"> -->
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
 <!-- meta tags to hide url and minimize status bar to give the web app
@@ -238,11 +238,7 @@ a native app look this only happens after app is saved to the desktop-->
             // var mapName = "RSW/RSW_Utilities_MS";
             // var mapName = "Utilities";
             var mapName = "RSW/Utilities"
-            var layersIndexes = [];
-            for (i = 1; i <= 33; i+=1) { 
-              layersIndexes.push(i);
-            };
-
+          
             var mapService = new ArcGISDynamicMapServiceLayer(serverUrl + '/' + mapName + '/MapServer');
             offlineWidget = new OfflineWidget();
 
@@ -251,8 +247,6 @@ a native app look this only happens after app is saved to the desktop-->
                 mapService: mapService}, function(e) {
               console.log("offlineWidget was started");
             });
-
-            offlineWidget.layerIndexes = layersIndexes;
 
             var storedExtent = localStorage.offlineExtent;
             var mapExtent;
@@ -293,7 +287,7 @@ a native app look this only happens after app is saved to the desktop-->
                 isScrollWheelZoom: true,
                 force3DTransforms: true,
                 maxZoom: 19,
-                minZoom: 15,
+                minZoom: 14,
                 showLabels: true,
                 extent: mapExtent,
                 infoWindow: popup
@@ -359,14 +353,7 @@ a native app look this only happens after app is saved to the desktop-->
             });
 
             offlineWidget.map = map;
-
-
-            offlineWidget.testUrls = [];
-         
-            arrayUtils.forEach(layersIndexes, function(item) {
-              offlineWidget.testUrls.push(serverUrl + '/' + mapName + '/MapServer/' + item);
-            });
-
+            
             offlineWidget.initialize();
             
           });
