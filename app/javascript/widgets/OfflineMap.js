@@ -1,6 +1,6 @@
-define(["dojo/_base/declare", "dojo/parser", "esri/geometry/Polygon", "dojo/ready",  "dojo/on", "utils/debouncer",
+define(["dojo/_base/declare", "dojo/parser", "dojo/mouse", "dojo/dom", "dojo/dom-style", "dojo/dom-class", "dojo/dom-attr", "esri/geometry/Polygon", "dojo/ready",  "dojo/on", "utils/debouncer",
     "dijit/_WidgetBase"], function (declare,
-    parser, Polygon, ready, on,  debouncer, _WidgetBase) { 
+    parser, mouse, dom, domStyle, domClass, domAttr, Polygon, ready, on,  debouncer, _WidgetBase) { 
 
      return declare("OfflineMap", [_WidgetBase], {   
     
@@ -35,6 +35,38 @@ define(["dojo/_base/declare", "dojo/parser", "esri/geometry/Polygon", "dojo/read
                     event.stopPropagation();
                 }
             } , false); 
+
+            var rightPanel = dom.byId("rightPanel");
+            var infoPanel = dom.byId("infoPanel");
+            var panels = dom.byId("panels");
+            var width = domStyle.get(infoPanel, 'width');
+            var _panelHoverGrow = on(rightPanel, mouse.enter, function(evt) {
+                evt.preventDefault();
+                evt.stopPropagation();
+                domStyle.set(infoPanel, {
+                    width: "250px",
+                });
+                domStyle.set(panels, {
+                    opacity: 1
+                });
+                 var _panelHoverShrink = on(panels, mouse.leave, function(evt) {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                    domStyle.set(infoPanel, {
+                        width: "20px"
+                    });
+                     domStyle.set(panels, {
+                        opacity: 0
+                     });
+                    
+                });
+            });
+
+           
+
+
+
+
         }
     });
 });

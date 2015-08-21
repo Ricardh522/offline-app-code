@@ -4,8 +4,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    border: double;
-    background-color: #334C4C;
+    background-color: rgb(255,255,255);
     z-index: 100;
     opacity: 1;
     visibility: visible;
@@ -24,7 +23,7 @@ body {
 .flex-container {
     -webkit-align-items: center;
     -ms-flex-align: center;
-    align-items: center
+    align-items: center;
 }
 
 #messages p {
@@ -49,19 +48,24 @@ body {
 }
 
 #buttons {
-    z-index: 100;
-    background-color: rgba(255,255,255,0.5)
+    z-index: 80;
+    background-color: rgba(255,255,255,1);
+    border-bottom: 1px solid gray;
+    position: absolute;
+    top:0px;
+    left:0px;
+    right:0px;
 }
 
 #esriButtons {
     position: relative;
-    left: 100px;
+    left: 50px;
     opacity: 1.0;
 }
 
 #offlineButtons button {
     opacity: 1.0;
-    right: 10px;
+    right: 50px;
 }
 
 .container-fluid {
@@ -70,7 +74,6 @@ body {
     transition-property: opacity, visibility;
     transition-delay: 0;
     transition-duration: 6s;
-    padding-bottom: 5px;
     overflow: hidden;
     position: absolute;
     top: 0px;
@@ -78,6 +81,7 @@ body {
     right: 0px;
     bottom: 0px;
     z-index: 0;
+
 }
 
 
@@ -92,6 +96,26 @@ body {
     width: 100%;
 }
 
+#leftPanel {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    width: 20px;
+    background-color: rgb(255,255,255);
+    z-index: 100;
+}
+
+#rightPanel {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    width: 20px;
+    background-color: rgb(255,255,255);
+    z-index: 100;
+}
+
 #scalebarHousing {
     width: 100%;
     height: 40px;
@@ -99,19 +123,25 @@ body {
     opacity: 1;
     padding-bottom: 2px;
     display: inline-block;
-    background-color: #fff;
-    z-index: 10;
+    background-color: rgba(255,255,255,1);
+    z-index: 80;
     position: absolute;
     bottom: 0px;
+    border-top: 1px solid gray;
+}
+
+.esriScalebar {
+    left: 25px;
 }
 
 #infoPanel {
-    height: 100%;
-    position: absolute;
-    top: 50px;
+    float: right;
+    position: relative;
+    margin-top: 0px;
     right: 0px;
     bottom: 0px;
-    width: 250px;
+    width: 20px;
+    z-index:50;
 }
 
 #panels{
@@ -120,22 +150,22 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    padding: 5px;
+    opacity: 0;
 }
 
 #layerListHousing {
     display: inline-block;
     flex: 1 0 auto;
-    border: 1px black;
+    border-bottom: 1px solid gray;
     background-color: white;
-    width: 100%;
 }
 
 #legendHousing {
     display: inline-block;
     flex: 1 0 auto;
-    border: 1px black;
+    border-top: 1px solid gray;
     background-color: white;
-    max-height: 50%;
 }
 
 #legendDiv {
@@ -164,7 +194,7 @@ body {
 }
 
 body {
-    background-color: #334C4C;
+    background-color: rgb(255,255,255);
     font-family: "Trebuchet MS"
 }
 

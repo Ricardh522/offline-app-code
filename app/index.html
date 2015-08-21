@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 
-<html>
-<!-- <html manifest="appcache.manifest"> -->
+<!-- <html> -->
+<html manifest="appcache.manifest">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
@@ -190,15 +190,14 @@ a native app look this only happens after app is saved to the desktop-->
      "esri/graphic", "esri/layers/GraphicsLayer", "esri/symbols/PictureMarkerSymbol", "esri/dijit/HomeButton",
      "esri/dijit/Scalebar", "esri/layers/GeoRSSLayer", "esri/geometry/Extent", "esri/SpatialReference", "esri/layers/ImageParameters",
      "esri/arcgis/OAuthInfo", "esri/IdentityManager", "esri/dijit/Legend", "esri/dijit/Popup", "esri/dijit/PopupTemplate", "dojo/dom-construct",
-      "esri/symbols/SimpleFillSymbol",
+      "esri/symbols/SimpleFillSymbol", "esri/dijit/LayerList",
      // Custom Modules
      "javascript/utils/bootstrapmap.min.js", "utils/appCacheManager", "widgets/OfflineWidget",
      "javascript/dist/offline-edit-src.js", "javascript/dist/offline-tiles-advanced-src.js", "dojo/domReady!"],
     function (Query, on, parser, SimpleRenderer, BasemapGallery, SimpleMarkerSymbol, SimpleLineSymbol, Color, PopupTemplate,
         arrayUtils, dom, query, LocateButton, ArcGISDynamicMapServiceLayer, FeatureLayer, Point, domStyle, domAttr,
         Graphic, GraphicsLayer, PictureMarkerSymbol, HomeButton, Scalebar,
-        GeoRSSLayer, Extent, SpatialReference, ImageParameters, OAuthInfo, esriId, Legend, Popup,  PopupTemplate, domConstruct,SimpleFillSymbol,
-        BootstrapMap, AppCacheManager, OfflineWidget) {
+        GeoRSSLayer, Extent, SpatialReference, ImageParameters, OAuthInfo, esriId, Legend, Popup,  PopupTemplate, domConstruct,SimpleFillSymbol, LayerList, BootstrapMap, AppCacheManager, OfflineWidget) {
 
             var appCacheManager;
             initAppCacheManager();
@@ -296,16 +295,17 @@ a native app look this only happens after app is saved to the desktop-->
                 logo: false,
                 fadeOnZoom: true,
                 isScrollWheelZoom: true,
+                isZoomSlider: true,
                 force3DTransforms: true,
                 maxZoom: 19,
                 minZoom: 14,
-                showLabels: false,
+                showLabels: true,
                 extent: mapExtent,
                 infoWindow: popup
             });
     
-    		    function initHomeButton() {
-                homeButton = new HomeButton({
+    		  function initHomeButton() {
+                var homeButton = new HomeButton({
                     map: map,
                     visible: true
                 }, 'homeButton');
@@ -313,7 +313,7 @@ a native app look this only happens after app is saved to the desktop-->
             }
 
             function initEsriLocate() {
-                esriLocate = new LocateButton({
+                var esriLocate = new LocateButton({
                     centerAt: true,
                     geolocationOptions: {
                         maximumAge: 0,
@@ -330,14 +330,14 @@ a native app look this only happens after app is saved to the desktop-->
             }
 
              function initScalebar() {
-                scalebar = new Scalebar({
+                var scalebar = new Scalebar({
                     map: map,
                     scalebarUnit: "dual"
                 }, dojo.byId('scalebarHousing'));
             }
 
             function initLegend() {
-                legend = new Legend({
+                var legend = new Legend({
                     arrangement: 2,
                     autoUpdate: true,
                     map: map,
@@ -345,13 +345,25 @@ a native app look this only happens after app is saved to the desktop-->
                     }, "legendDiv");
 
                     legend.startup();
-                  }
+            }
 
+            function initLayerList() {
+                    var toc = new LayerList({
+                      layers: null,
+                      map: map,
+                      removeUnderscores: true,
+                      subLayers: true
+                    }, "layerList");
+                    toc.startup();
+                    offlineWidget.toc = toc;
+            }
+            
              map.on('load', function(e) {
                  initScalebar();
                  initHomeButton();
                  initEsriLocate();
                  initLegend();
+                 initLayerList();
             });
 
             offlineWidget.map = map;
@@ -400,13 +412,15 @@ a native app look this only happens after app is saved to the desktop-->
    
 
         <div id='scalebarHousing'></div>
-        <div id="infoPanel">
-          <div id="panels"class="touch-moveable">
-            <div id="layerListHousing" class="touch-moveable">
+        <div id="leftPanel"></div>
+        <div id="rightPanel"></div>
+        <div id="infoPanel" >
+          <div id="panels" class="touch-moveable">
+            <div id="layerListHousing">
                   <span>Layers</span>
                   <div id='layerList'></div>
               </div>
-              <div id="legendHousing" class="touch-moveable">
+              <div id="legendHousing">
                   <span>Legend</span>
                   <div id="legendDiv"></div>
               </div>

@@ -86,6 +86,7 @@ javascript/3.14/esri/urlUtils.js
 javascript/3.14/esri/SpatialReference.js
 javascript/3.14/esri/IdentityManager.js
 javascript/3.14/esri/renderers/SimpleRenderer.js
+javascript/3.14/esri/renderers/SmartMapping.js
 javascript/3.14/esri/nls/jsapi_en-us.js
 javascript/3.14/esri/PopupInfo.js
 javascript/3.14/esri/IdentityManagerDialog.js
@@ -112,6 +113,7 @@ javascript/3.14/esri/dijit/HomeButton.js
 javascript/3.14/esri/dijit/Scalebar.js
 javascript/3.14/esri/dijit/PopupTemplate.js
 javascript/3.14/esri/dijit/Legend.js
+javascript/3.14/esri/dijit/LayerList.js
 javascript/3.14/esri/dijit/PopupRenderer.js
 javascript/3.14/esri/dijit/images/home.png
 javascript/3.14/esri/dijit/images/locate.png
@@ -182,6 +184,7 @@ javascript/3.14/dijit/_Container.js
 javascript/3.14/dijit/Viewport.js
 javascript/3.14/dijit/a11yclick.js
 javascript/3.14/dojo/query.js
+javascript/3.14/dojo/mouse.js
 javascript/3.14/dojo/i18n.js
 javascript/3.14/dojo/NodeList-dom.js
 javascript/3.14/dojo/_base/array.js

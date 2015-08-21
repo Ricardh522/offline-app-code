@@ -150,7 +150,6 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                     $(this).css('-webkit-transform', 'scale(1, 1)');
                     
                     var db;
-
                     var openDb = function (params, callback) {
                         request = indexedDB.open(DB_NAME, 11);
                         request.onupgradeneeded = function(event) {
@@ -376,7 +375,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
 
                             var _maplisten = map.on('layers-add-result', function(evt) {
                                 _maplisten.remove();
-                                toc.refresh();
+                                offlineWidget.toc.refresh();
                                 var promises = [];
                                 var ids = map.graphicsLayerIds;
                                 arrayUtils.forEach(ids, function(id) {
@@ -386,15 +385,10 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                                             console.log("graphics have not be created yet");
                                             var _listen = layer.on('update-end', function(e) {
                                                 _listen.remove();
-                                                labelLayers(layer, function(e) {
-                                                     deferred.resolve(e);
-                                                });
+                                               deferred.resolve(layer);
                                             });
                                          } else if (layer.graphics.length > 0) {
-                                            labelLayers(layer, function(e) {
-                                                 deferred.resolve(e);
-                                            });
-
+                                                 deferred.resolve(layer);
                                         }
                                         promises.push(deferred);        
                                 });
@@ -403,7 +397,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                                 allPromises.then(function(results) {
                                     console.log(results);
                                     
-                                    //offlineWidget.initOfflineDatabase(results);  
+                                    offlineWidget.initOfflineDatabase(results);  
                                 });
                             });
                             var layerlist = layerholder.polys.concat(layerholder.lines, layerholder.points);
@@ -411,21 +405,12 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                             var tocLayers = [];
                             for (i = 0; i < layerlist.length; i +=1) {
                                 var outlayer = {
-                                    layer: layerlist[i],
-                                    subLayers: true,
-                                    visibility: true
-                                }
+                                    layer: layerlist[i]
+                                };
                                 tocLayers.push(outlayer);
                             }
-
-                              var toc = new LayerList({
-                                    layers: tocLayers,
-                                    map: offlineWidget.map,
-                                    removeUnderscores: true,
-                                    subLayers: true,
-                                }, "layerList");
-
-                              toc.startup();
+                            offlineWidget.toc.layers = tocLayers;
+                           
                             map.addLayers(layerlist);
                         });
                     });
@@ -679,6 +664,11 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                     callback();
                 }
 
+                 if (offlineWidget.hasOwnProperty("toc")) {
+                        offlineWidget.layers = null;
+                    };
+
+
 
                 
             },
@@ -691,8 +681,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                     _listener.remove();
                 });
 
+                offlineWidget.toc.layers = [{layer}];
+                offlineWidget.toc.refresh();
                 map.addLayer(layer);
-
             },
 
             updateLocalStorage: function() {
@@ -854,24 +845,23 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                                     tx.oncomplete = function(evt) {
                                       console.log("transaction completed collecting layers from store");
                                       promises = [];
-                                      arrayUtils.forEach(layerlist, function(lyr) {
-                                        var deferred = new Deferred();
-                                        var visible = lyr.visible;
-                                        if (visible === true) {
-                                                deferred.resolve(true);
-                                            } else {
-                                                deferred.resolve(false);
-                                            }
-                                            promises.push(deferred);
-                                        });
-                                        var allPromises = all(promises);
-                                        allPromises.then(function(results) {
-                                            if (promises.indexOf(false) === -1) {
-                                                offlineWidget.map.addLayers(layerlist);
-                                            } else {
-                                                alert("layers not retreived from storage");
-                                            }
-                                        });
+                                      
+                                        var tocLayers = [];
+                                        for (i=0; i<layerlist.length; i+=1) {
+                                            tocLayers.push({
+                                                layer: layerlist[i]
+                                            });
+                                        }
+
+                                          
+                                            var _layerListen = map.on('layers-add-result', function(evt) {
+                                                _layerListen.remove();
+                                                offlineWidget.toc.layers = tocLayers
+                                                offlineWidget.toc.refresh();
+                                                
+                                                });
+                                            
+                                        offlineWidget.map.addLayers(layerlist);
                                     };
                                 };
 
