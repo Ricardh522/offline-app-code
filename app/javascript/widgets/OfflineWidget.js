@@ -148,7 +148,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                 $('#clearButton').on('mouseup', function(e) {
                     e.preventDefault();
                     $(this).css('-webkit-transform', 'scale(1, 1)');
-                    
+                    offlineWidget.offlineMap.showLoading();
                     var db;
                     var openDb = function (params, callback) {
                         request = indexedDB.open(DB_NAME, 11);
