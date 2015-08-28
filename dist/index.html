@@ -1,43 +1,4 @@
-<!DOCTYPE html>
-
-<html>
-<!-- <html manifest="appcache.manifest"> -->
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"/>
-<!-- meta tags to hide url and minimize status bar to give the web app
-a native app look this only happens after app is saved to the desktop-->
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-
-<link rel="manifest" href="manifest.json"> 
-<link rel="apple-touch-icon-precomposed" sizes="57x57" href="images/apple-touch-icon-57x57.png" />
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="images/apple-touch-icon-114x114.png" />
-<link rel="apple-touch-icon-precomposed" sizes="72x72" href="images/apple-touch-icon-72x72.png" />
-<link rel="apple-touch-icon-precomposed" sizes="144x144" href="images/apple-touch-icon-144x144.png" />
-<link rel="apple-touch-icon-precomposed" sizes="60x60" href="images/apple-touch-icon-60x60.png" />
-<link rel="apple-touch-icon-precomposed" sizes="120x120" href="images/apple-touch-icon-120x120.png" />
-<link rel="apple-touch-icon-precomposed" sizes="76x76" href="images/apple-touch-icon-76x76.png" />
-<link rel="apple-touch-icon-precomposed" sizes="152x152" href="images/apple-touch-icon-152x152.png" />
-<!-- <link rel="apple-touch-startup-image" href="/startup.png"> -->
-<link rel="icon" type="image/png" href="images/favicon-196x196.png" sizes="196x196" />
-<link rel="icon" type="image/png" href="images/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/png" href="images/favicon-32x32.png" sizes="32x32" />
-<link rel="icon" type="image/png" href="images/favicon-16x16.png" sizes="16x16" />
-<link rel="icon" type="image/png" href="images/favicon-128.png" sizes="128x128" />
-<meta name="application-name" content="Mobile App Bootstrap with Offline-js"/>
-<meta name="msapplication-TileColor" content="#FFFFFF" />
-<meta name="msapplication-TileImage" content="images/mstile-144x144.png" />
-<meta name="msapplication-square70x70logo" content="images/mstile-70x70.png" />
-<meta name="msapplication-square150x150logo" content="images/mstile-150x150.png" />
-<meta name="msapplication-wide310x150logo" content="images/mstile-310x150.png" />
-<meta name="msapplication-square310x310logo" content="images/mstile-310x310.png" />
-
-<title>Mobile App Bootstrap with Offline-js</title>
-
-<head>
- <script>
+<!DOCTYPE html><html><meta http-equiv=Content-Type content="text/html; charset=utf-8"><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="initial-scale=1.0, maximum-scale=1.0,user-scalable=no, width=device-width"><meta name=apple-mobile-web-app-capable content=yes><meta name=apple-mobile-web-app-status-bar-style content=black-translucent><meta name=mobile-web-app-capable content=yes><link rel=manifest href=manifest.json><link rel=apple-touch-icon-precomposed sizes=57x57 href=images/apple-touch-icon-57x57.png><link rel=apple-touch-icon-precomposed sizes=114x114 href=images/apple-touch-icon-114x114.png><link rel=apple-touch-icon-precomposed sizes=72x72 href=images/apple-touch-icon-72x72.png><link rel=apple-touch-icon-precomposed sizes=144x144 href=images/apple-touch-icon-144x144.png><link rel=apple-touch-icon-precomposed sizes=60x60 href=images/apple-touch-icon-60x60.png><link rel=apple-touch-icon-precomposed sizes=120x120 href=images/apple-touch-icon-120x120.png><link rel=apple-touch-icon-precomposed sizes=76x76 href=images/apple-touch-icon-76x76.png><link rel=apple-touch-icon-precomposed sizes=152x152 href=images/apple-touch-icon-152x152.png><link rel=icon type=image/png href=images/favicon-196x196.png sizes=196x196><link rel=icon type=image/png href=images/favicon-96x96.png sizes=96x96><link rel=icon type=image/png href=images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=images/favicon-16x16.png sizes=16x16><link rel=icon type=image/png href=images/favicon-128.png sizes=128x128><meta name=application-name content="Mobile App Bootstrap with Offline-js"><meta name=msapplication-TileColor content=#FFFFFF><meta name=msapplication-TileImage content=images/mstile-144x144.png><meta name=msapplication-square70x70logo content=images/mstile-70x70.png><meta name=msapplication-square150x150logo content=images/mstile-150x150.png><meta name=msapplication-wide310x150logo content=images/mstile-310x150.png><meta name=msapplication-square310x310logo content=images/mstile-310x310.png><title>Mobile App Bootstrap with Offline-js</title><head><script>
 //     // DO NOT DELETE!
 //     // Listen for application cache update events
 //     // We want to place this as early in the application life-cycle as possible!
@@ -98,8 +59,7 @@ a native app look this only happens after app is saved to the desktop-->
    //         console.log("App cache reloaded");
    //     }
    // },false)
- </script>
-<script>
+ </script><script>
   //   var cacheStatusValues = [];
   //   cacheStatusValues[0] = 'uncached';
   //   cacheStatusValues[1] = 'idle';
@@ -144,22 +104,7 @@ a native app look this only happens after app is saved to the desktop-->
   
   // setInterval(function(){cache.update()}, 10000);
 
-</script>
-  
-    <!-- Bootstrap core CSS -->
-    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
-    <!-- <link rel="stylesheet" href="http://127.0.0.1/arcgis_js_api/library/3.14/3.14/esri/css/esri.css"> -->
-    <link rel="stylesheet" href= "javascript/3.14/esri/css/esri.css">
-
-    <link rel="stylesheet" href="css/bootstrapmap.min.css">
- 
-
-    <!--Include a reference to offline.js which detects online/offline conditions-->
-    <script src="javascript/vendor/offline.min.js"></script>
-    <script src="javascript/utils/jquery-1.11.1.js"></script>
-    <script src="javascript/utils/bootstrap.min.js"></script>     
-
-    <script>
+</script><link href=css/bootstrap.min.css rel=stylesheet media=screen><link rel=stylesheet href=javascript/3.14/esri/css/esri.css><link rel=stylesheet href=css/bootstrapmap.min.css><script src=javascript/vendor/offline.min.js></script><script src=javascript/utils/jquery-1.11.1.js></script><script src=javascript/utils/bootstrap.min.js></script><script>
         Offline.options = {
             checks: {
                 image: {
@@ -172,17 +117,8 @@ a native app look this only happens after app is saved to the desktop-->
         }
 
 
-    </script>
-    
-    <script src= "javascript/3.14/init.js" data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets'}, {name:'utils', location:document.URL + 'javascript/utils'}], async: true, isDebug: true">
-    </script>
-
-
-
-    <!-- Include a reference to IndexedDBShim for library to work on Safari 7.x -->
-    <script src="javascript/vendor/IndexedDBShim.js"></script>
-       <link rel="stylesheet" href="css/template-design.css">
-    <script>
+    </script><script src=javascript/3.14/init.js data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets'}, {name:'utils', location:document.URL + 'javascript/utils'}], async: true, isDebug: true">
+    </script><script src=javascript/vendor/IndexedDBShim.js></script><link rel=stylesheet href=css/template-design.css><script>
     require(["esri/tasks/query", "dojo/on", "dojo/parser", "esri/renderers/SimpleRenderer", "esri/dijit/BasemapGallery",
      "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color", "esri/dijit/PopupTemplate",
      "dojo/_base/array", "dojo/dom", "dojo/query", "esri/dijit/LocateButton", "esri/layers/ArcGISDynamicMapServiceLayer",
@@ -238,7 +174,7 @@ a native app look this only happens after app is saved to the desktop-->
             // var mapName = "RSW/RSW_Utilities_MS";
             // var mapName = "Utilities";
             var mapName = "RSW/Utilities"
-
+          
             var mapService = new ArcGISDynamicMapServiceLayer(serverUrl + '/' + mapName + '/MapServer');
             offlineWidget = new OfflineWidget();
 
@@ -272,7 +208,7 @@ a native app look this only happens after app is saved to the desktop-->
             if (storedZoom  !== undefined) {
               zoom = storedZoom;
             } else {
-              zoom = 15
+              zoom = 16
             }
 
 
@@ -373,61 +309,4 @@ a native app look this only happens after app is saved to the desktop-->
           });
     
 
-      </script>
-
-
-   
-</head>
-<body>
-    <!-- Splash Page-->
-    <div id="splashPage" class="flex-container">
-        <img id="logo" src="images/logo-rsw.png" />
-    </div>
-    <!--Map Page-->
-        
-        <div id = "buttons">
-          <div id = "esriButtons">
-              <div id="homeButton"></div>
-              <div id="esriLocate"></div>
-          </div>
-        
-          <div id = "offlineButtons" class = "btn-group" role="group" aria-label="imagery and feature download">
-                <button type='button'  id="downloadTiles" class="btn btn-primary disabled">
-                  <span class= "glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
-                </button>
-                
-                <button type='button' id="downloadFeatures" class='btn btn-default disabled'>
-                    <span id="img" class= "glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-                </button>
-
-                <button type='button' id="clearButton" class="btn btn-default disabled">
-                     <span class= "glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>
-                </button>
-          </div>
-      </div>
-          
-      <div class="container-fluid">   
-          <div id="mapDiv">
-              <img id="loadingImg" src="images/loading-throb.gif" />
-          </div>
-      </div>
-   
-
-        <div id='scalebarHousing'></div>
-        <div id="leftPanel"></div>
-        <div id="rightPanel"></div>
-        <div id="infoPanel" >
-          <div id="panels" class="touch-moveable">
-            <div id="layerListHousing">
-                  <div id='layerList'></div>
-              </div>
-              <div id="legendHousing">
-                  <span>Legend</span>
-                  <div id="legendDiv"></div>
-              </div>
-          </div>
-        </div>
-        
-
-</body>
-</html>
+      </script></head><body><div id=splashPage class=flex-container><img id=logo src=images/logo-rsw.png></div><div id=buttons><div id=esriButtons><div id=homeButton></div><div id=esriLocate></div></div><div id=offlineButtons class=btn-group role=group aria-label="imagery and feature download"><button type=button id=downloadTiles class="btn btn-primary disabled"><span class="glyphicon glyphicon-cloud-download" aria-hidden=true></span></button><button type=button id=downloadFeatures class="btn btn-default disabled"><span id=img class="glyphicon glyphicon-download-alt" aria-hidden=true></span></button><button type=button id=clearButton class="btn btn-default disabled"><span class="glyphicon glyphicon-cloud-upload" aria-hidden=true></span></button></div></div><div class=container-fluid><div id=mapDiv><img id=loadingImg src=images/loading-throb.gif></div></div><div id=scalebarHousing></div><div id=leftPanel></div><div id=rightPanel></div><div id=infoPanel><div id=panels class=touch-moveable><div id=layerListHousing><div id=layerList></div></div><div id=legendHousing><span>Legend</span><div id=legendDiv></div></div></div></div></body></html>
