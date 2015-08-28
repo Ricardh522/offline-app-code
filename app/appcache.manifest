@@ -106,6 +106,7 @@ javascript/3.14/esri/symbols/SimpleFillSymbol.js
 javascript/3.14/esri/arcgis/OAuthInfo.js
 javascript/3.14/esri/arcgis/utils.js
 javascript/3.14/esri/dijit/BasemapGallery.js
+javascript/3.14/esri/dijit/util/busyIndicator.js
 javascript/3.14/esri/dijit/font/popup.woff
 javascript/3.14/esri/dijit/font/popup.ttf
 javascript/3.14/esri/dijit/LocateButton.js

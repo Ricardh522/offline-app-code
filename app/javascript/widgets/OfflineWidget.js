@@ -232,11 +232,17 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
             /*Begin the process of downloading the feature services and collecting them in layerholder*/
 
             startFeatureDownload: function(param, callback) {
+                this.offlineMap.showLoading();
                 var downloadTiles = dom.byId('downloadTiles');
                 var downloadFeatures = dom.byId('downloadFeatures');
+
                 var clearButton = dom.byId('clearButton');
                 var buttons = [downloadTiles, downloadFeatures, clearButton];
                 var map = this.map;
+
+                map.disableMapNavigation();
+                map.disablePan();
+
                 var mapService = this.mapService.url;
 
                  function labelLayers(lyr, callback) {
@@ -375,6 +381,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
 
                             var _maplisten = map.on('layers-add-result', function(evt) {
                                 _maplisten.remove();
+                              
                                 offlineWidget.toc.refresh();
                                 var promises = [];
                                 var ids = map.graphicsLayerIds;
@@ -567,6 +574,8 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
              * in the local database
              */
             downloadTiles: function(callback){
+                this.offlineMap.showLoading();
+
                 var tileLayer = this.offlineTiles.tileLayer;
                 var minZoomAdjust = this.offlineTiles.minZoomAdjust;
                 var maxZoomAdjust = this.offlineTiles.maxZoomAdjust;
@@ -624,16 +633,20 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
 
                 if( progress.finishedDownloading )
                 {
+                    var that = offlineWidget.offlineMap;
                     $('#navbar > span').remove();
                     if( progress.cancelRequested )
                     {
                         offlineWidget.downloadState = 'cancelled';
                         alert("Tile download was cancelled");
+                        that.hideLoading();
                     }
                     else
                     {
                         offlineWidget.downloadState = 'downloaded';
                         alert("Tile download complete");
+                        that.hideLoading();
+
                         offlineWidget.offlineTiles.tileLayer.saveToFile("myOfflineTilesLayer.csv", function(success, msg) {
                             console.log(success);
                             console.log(msg);
@@ -666,7 +679,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
 
                  if (offlineWidget.hasOwnProperty("toc")) {
                         offlineWidget.layers = null;
-                    };
+                    }
 
 
 
@@ -679,6 +692,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                 var _listener = map.on('layer-add-result', function(e) {
                     console.log("Map Service Added back to Map");
                     _listener.remove();
+                    offlineWidget.offlineMap.hideLoading();
                 });
 
                 offlineWidget.toc.layers = [{layer}];
@@ -789,6 +803,8 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                     },
 
                 loadOffline: function () {
+                    this.offlineMap.showLoading();
+
                     var map = offlineWidget.map;
                     var layerlist = [];
                     // retreive the features from indexedDB and load into the map
@@ -856,8 +872,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                                           
                                             var _layerListen = map.on('layers-add-result', function(evt) {
                                                 _layerListen.remove();
-                                                offlineWidget.toc.layers = tocLayers
+                                                offlineWidget.toc.layers = tocLayers;
                                                 offlineWidget.toc.refresh();
+                                                offlineWidget.offlineMap.hideLoading();
                                                 
                                                 });
                                             
