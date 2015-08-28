@@ -1,49 +1,40 @@
 #splashPage {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: double;
-    background-color: #334C4C;
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    right: 0px;
+    background-color: rgb(255,255,255);
     z-index: 100;
     opacity: 1;
     visibility: visible;
     transition-property: opacity, visibility;
     transition-delay: 3s;
     transition-duration: 3s;
+    display: flex;
+    justify-content: center;
+    align-content: center;
 }
 
 body {
-	overflow: hidden;
+        position: absolute;
+        overflow: hidden;
+        height: 100%;
+        width: 100%;
+}
+
+#loadingImg {
+    position: fixed;
+    right: 50%;
+    top: 50%;
+    z-index:100;
+    background-color: rgba(255,255,255,0)
 }
 
 .flex-container {
     -webkit-align-items: center;
     -ms-flex-align: center;
-    align-items: center
-}
-
-.flex-container,
-#bottompanel {
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-justify-content: center;
-    -ms-flex-pack: center;
-    justify-content: center
-}
-
-#bottompanel {
-    min-height: 60px;
-    z-index: 0;
-    background-color: #334C4C;
-    -webkit-flex-direction: row;
-    -ms-flex-direction: row;
-    flex-direction: row;
-    -webkit-align-items: flex-start;
-    -ms-flex-align: start;
-    align-items: flex-start
+    align-items: center;
 }
 
 #messages p {
@@ -54,30 +45,36 @@ body {
     float: left
 }
 
-#offline_menu button {
-    margin: 10px
-}
-
-#offline_menu {
-    margin: 10px;
-    z-index: 100;
-    background-color: #fff;
-    position: relative;
-    width: 95%;
-    display: block
-}
-
 #logo {
     max-height: 20%;
     max-width: 55%;
     display: inline-block;
-    top: 25%;
-    position: absolute
 }
 
-#logo,
+
 #progress {
     horizontal-align: center
+}
+
+#buttons {
+    z-index: 80;
+    background-color: rgba(255,255,255,1);
+    border-bottom: 1px solid gray;
+    position: absolute;
+    top:0px;
+    left:0px;
+    right:0px;
+}
+
+#esriButtons {
+    position: relative;
+    left: 50px;
+    opacity: 1.0;
+}
+
+#offlineButtons button {
+    opacity: 1.0;
+    right: 50px;
 }
 
 .container-fluid {
@@ -86,96 +83,119 @@ body {
     transition-property: opacity, visibility;
     transition-delay: 0;
     transition-duration: 6s;
-    overflow: hidden
+    overflow: hidden;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    z-index: 0;
+
 }
 
-.col-xs-12,
-.col-xs-9,
-.col-xs-3 {
-    padding: 2px
-}
-
-.col-xs-3 {
-    border-right: 4px #000
-}
 
 .hidden-xs {
     display: none
 }
 
+
 #mapDiv {
     z-index: 0;
     height: 100%;
-    width: 100%;
-    overflow: hidden
+    height: 100%;
+    min-height: 895px;
 }
 
-.esriScalebarLine {
-    background-color: #fff;
-    border: #fff 2px #000;
-    opactiy: 1;
-    padding: 2px
+#leftPanel {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    bottom: 0px;
+    width: 20px;
+    background-color: rgb(255,255,255);
+    z-index: 100;
 }
 
-.esriScalebar {
-    width: 35%;
-    position: relative;
-    padding: 2px
-}
-
-.esriScalebarRuler,
-.scaleLabelDiv {
-    right: 5px;
-    left: 5px;
-    position: absolute
-}
-
-.esriScalebarLabel {
-    font: 12px arial;
-    color: #000;
-    font-family: sans-serif;
-    text-shadow: 0 0 5px #fff;
-    top: 5px
+#rightPanel {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    width: 20px;
+    background-color: rgb(255,255,255);
+    z-index: 100;
 }
 
 #scalebarHousing {
-    left: 2px;
-    right: 2px;
-    bottom: 2px;
-    height: 20px;
-    opacity: 1
-}
-
-#scalebarHousing,
-#legendHousing {
-    display: inline-block;
+    width: 100%;
+    height: 40px;
+    padding-top: 5px;
+    opacity: 1;
+    padding-bottom: 2px;
+    display:  block;
+    background-color: rgba(255,255,255,1);
+    z-index: 80;
     position: absolute;
-    background-color: #fff
+    bottom: 0px;
+    border-top: 1px solid gray;
 }
 
-#legendHousing {
-    right: 0;
-    bottom: 0;
-    opacity: .95;
-    padding: 5px;
-    border: 1px solid #000;
+.esriScalebar {
+    left: 25px;
+}
+
+#infoPanel {
+    position: relative;
+    float: right;
+    width: 20px;
+    z-index:50;
+    max-height: 95%;
     overflow-y: scroll;
-    max-height: 50%;
-    max-width: 50%;
-    -webkit-transform: translate(70%, 80%);
-    transform: translate(70%, 80%)
 }
 
-.touch-moveable {
-	-webkit-overflow-scrolling: touch;
+#panels{
+    z-index: 50;
+    position: relative;
+    background-color: white;
+    display: inline-block;
+}
+
+#layerListHousing, #legendHousing {
+    position: relative;
+    float: right;
+    display: inline-block;
+    z-index: 50;
+    border-bottom: 1px solid gray;
+    background-color: white;
 }
 
 #legendDiv {
-    visibility: hidden
+
+}
+
+ .esriLegendService{
+
+ }
+
+ .esriLegendServiceLabel {
+
+ }
+
+.esriLegendLayerLabel{
+
+}
+
+.esriLegendLayer{
+
+}
+
+
+.touch-moveable {
+    -webkit-overflow-scrolling: touch;
 }
 
 body {
-    background-color: #334C4C;
+    background-color: rgb(255,255,255);
     font-family: "Trebuchet MS"
 }
 
@@ -186,11 +206,6 @@ body {
 #homeButton,
 #esriLocate {
     display: inline-block;
-}
-
-#img-offline-indicator {
-    padding: 8px;
-    position: relative
 }
 
 #navbar {
@@ -218,19 +233,11 @@ body {
     flex-direction: row;
 }
 
-
 #offlineButtons {
     display: flex;
     position: relative;
     justify-content: space-between;
     width: 140px;
-}
-
-
-#title,
-#controllers {
-    position: relative;
-    width: 33.333%
 }
 
 paper-fab:active {
@@ -241,39 +248,6 @@ paper-fab:active {
 button:focus,
 input:focus {
     outline: 0!important
-}
-
-#tools {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    overflow-y: scroll;
-    box-shadow: -2px 2px 2px 2px #000
-}
-
-#tools,
-#mapservices {
-    z-index: 100;
-    background-color: #fff
-}
-
-#mapservices {
-    margin: 10px;
-    position: relative;
-    width: 95%;
-    display: block
-}
-
-#mapservices button {
-    margin: 10px
-}
-
-#layer_list {
-    position: relative;
-    width: 90%;
-    z-index: 0;
-    margin-left: 10px
 }
 
 .span-pending {
@@ -309,3 +283,39 @@ input:focus {
 .line span {
     margin-left: 5px
 }
+
+/*** Restyle Esri Popup ***/
+.esriPopupWrapper {
+  font-size: 14px;
+  font-weight: normal;
+  line-height: 18px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #333333;
+}
+
+/* Easy color control */
+.esriPopupWrapper {
+  background-color: #fff;
+}
+
+.esriPopup .titlePane, .esriPopup .contentPane, .esriPopup .actionsPane, 
+.esriPopup .pointer, .esriPopup .outerPointer, .esriPopup .pointer.top, .esriPopup .pointer.topLeft, 
+.esriPopup .pointer.topRight, .esriPopup .pointer.bottomLeft, .esriPopup .pointer.bottomRight {
+  background-color: #fff;
+}
+
+/* Soften corners */
+.esriPopup.light .esriPopupWrapper, .esriPopup.dark .esriPopupWrapper {
+  border-radius: 1em;
+  -webkit-border-radius: 1em;
+}
+
+.esriPopup.light .titlePane, .esriPopup.dark .titlePane {
+  border-radius: 0.3em 0.3em 0 0;
+  -webkit-border-radius: 0.3em 0.3em 0 0;
+}
+.esriPopup.light .actionsPane, .esriPopup.dark .actionsPane {
+  border-radius: 0px 0px 0.3em 0.3em;
+  -webkit-border-radius: 0px 0px 0.3em 0.3em;
+}
+
