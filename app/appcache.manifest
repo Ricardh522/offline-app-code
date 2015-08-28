@@ -1,5 +1,5 @@
 CACHE MANIFEST
-#1.8
+#1.0
 CACHE:
 #
 index.html
@@ -79,7 +79,11 @@ javascript/vendor/offline.min.js
 javascript/widgets/OfflineMap.js
 javascript/widgets/OfflineTiles.js
 javascript/widgets/OfflineWidget.js
+<<<<<<< HEAD
 javascript/widgets/MyGraphics.js
+=======
+javascript/widgets/OfflineTPK.js
+>>>>>>> RichardRSW
 javascript/3.14/esri/Color.js
 javascript/3.14/esri/graphic.js
 javascript/3.14/esri/urlUtils.js

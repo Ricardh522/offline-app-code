@@ -222,11 +222,16 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
             },
 
             initModules: function(params, callback){
+                    (function() {
                     offlineWidget.offlineMap = new OfflineMap();
                     offlineWidget.offlineTiles = new OfflineTiles();
+                    offlineWidget.offlineTPK = new OfflineTPK();
                     offlineWidget.offlineMap.startup();
                     offlineWidget.offlineTiles.startup();
+                    offlineWidget.offlineTPK.startup();
+                })();
                     callback(true);
+                    
             },
 
             /*Begin the process of downloading the feature services and collecting them in layerholder*/
@@ -239,9 +244,6 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                 var clearButton = dom.byId('clearButton');
                 var buttons = [downloadTiles, downloadFeatures, clearButton];
                 var map = this.map;
-
-                map.disableMapNavigation();
-                map.disablePan();
 
                 var mapService = this.mapService.url;
 
@@ -426,13 +428,14 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
           
             init: function(params, callback) {
                 var map = offlineWidget.map;
+
                 var mapService = this.mapService;
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
                 map.addLayers([tileLayer,mapService]);
                 // map.addLayers([mapService]);
                 var splash = map.on('layers-add-result', initSplashPage);
-                    
-                function initSplashPage(e) {
+
+                function initSplashPage() {
                     var intro = $("#splashPage");
                     var mapPage = $(".container-fluid");
                     
@@ -443,7 +446,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                     splash.remove();
                 }
 
-                
+                initSplashPage();
                 this.offlineMap.initEvents();
                 callback(true);
              },
@@ -850,11 +853,11 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                                                 testLayer.url = dataStore.featureLayerUrl;
                                             }
                                             testLayer.infoTemplate = popupTemplate;
+
                                             testLayer.visible = true;
                                             layerlist.push(testLayer);
-
-                                       
                                             cursor.continue();
+
                                         }
                                     };
 
