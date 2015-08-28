@@ -4,6 +4,7 @@ gulpfile.js
 web.config
 Demo-Grafton.sublime-project
 Demo-Grafton.sublime-workspace
-.tmp/
+.tmp/styles/
+
 
 3naxgioq.jbs.txt
