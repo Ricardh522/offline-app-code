@@ -7,9 +7,9 @@ define(["dojo/_base/declare", "dojo/parser", "dojo/ready",  "dojo/on",
                  // Retrieve the TPK file via an HTTP request
                     var tpkLayer = null;
                     var xhrRequest = new XMLHttpRequest();
-                    xhrRequest.open("GET", "/data/Utilities_Local.zip", true);
+                    xhrRequest.open("GET", "./data/Utilities_Local.zip", true);
                     xhrRequest.responseType = "blob";
-                    xhrRequest.setRequestHeader("Content-type", "application/octet-stream");
+                    xhrRequest.setRequestHeader("Content-type", "application/zip");
                     xhrRequest.onprogress = function(evt){
                         var percent;
                         if(evt.hasOwnProperty("total")){
