@@ -429,10 +429,10 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                 var that = this;
                 var map = offlineWidget.map;
                 var mapService = this.mapService;
-                var tileLayer = offlineWidget.offlineTiles.tileLayer;
-                map.addLayers([tileLayer,mapService]);
+                // var tileLayer = offlineWidget.offlineTiles.tileLayer;
+                map.addLayer(mapService);
                 // map.addLayers([mapService]);
-                var splash = map.on('layers-add-result', initSplashPage);
+                var splash = map.on('layer-add-result', initSplashPage);
 
                 function initSplashPage() {
                     var intro = $("#splashPage");

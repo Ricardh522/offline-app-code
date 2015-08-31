@@ -59,14 +59,13 @@ gulp.task('images', () =>
 // Copy all files at the root level (app)
 gulp.task('copy', () =>
   gulp.src([
-    'app/*',
-    '!app/*.html',
-    'app/manifest.json',
-    'app/appcache.maifest',
-    'node_modules/apache-server-configs/dist/.htaccess'
+    'app/javascript/dist/*.js',
+    'app/javascript/lib/*.js',
+    'app/javascript/utils/*.js',
+    'app/javascript/vendor/*.js',
   ], {
-    dot: true
-  }).pipe(gulp.dest('dist'))
+    dot: false
+  }).pipe(gulp.dest('dist/javascript'))
     .pipe($.size({title: 'copy'}))
 );
 
@@ -106,8 +105,8 @@ gulp.task('styles', () => {
     // Concatenate and minify styles
     .pipe($.if('*.css', $.minifyCss()))
     .pipe($.sourcemaps.write('.'))
-    .pipe(gulp.dest('dist/styles'))
-    .pipe($.size({title: 'styles'}));
+    .pipe(gulp.dest('dist/css'))
+    .pipe($.size({title: 'css'}));
 });
 
 // Concatenate and minify JavaScript
@@ -120,7 +119,7 @@ gulp.task('scripts', () =>
     './app/javascript/widgets/OflineTiles.js'
     // Other scripts
   ])
-    .pipe($.concat('main.min.js'))
+    .pipe($.concat('offlineWidget.js'))
     .pipe($.uglify({preserveComments: 'some'}))
     // Output files
     .pipe(gulp.dest('dist/javascript/widgets'))
