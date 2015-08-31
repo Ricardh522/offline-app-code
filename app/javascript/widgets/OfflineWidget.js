@@ -2,7 +2,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
   "dojo/dom", "dojo/dom-class", "dojo/on", "dojo/Deferred", "dojo/promise/all",
    "utils/debouncer", "esri/geometry/webMercatorUtils", "esri/tasks/Geoprocessor",
     "dijit/_WidgetBase", "esri/tasks/IdentifyTask", "esri/tasks/IdentifyParameters",
-     "esri/tasks/IdentifyResult","widgets/OfflineMap", "widgets/MyGraphics",
+     "esri/tasks/IdentifyResult","widgets/OfflineMap",
       "widgets/OfflineTiles", "esri/tasks/FeatureSet",
       "esri/layers/ArcGISDynamicMapServiceLayer",
        "esri/layers/ImageParameters", "esri/geometry/Extent",
@@ -15,7 +15,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
      "esri/symbols/SimpleLineSymbol", "esri/Color", "esri/dijit/LayerList"],
   function (declare, arrayUtils, parser, ready, dom, domClass, on, Deferred, all,
    debouncer, webMercatorUtils, Geoprocessor, _WidgetBase, IdentifyTask,
-  IdentifyParameters, IdentifyResult, OfflineMap, MyGraphics, OfflineTiles,
+  IdentifyParameters, IdentifyResult, OfflineMap, OfflineTiles,
    FeatureSet, ArcGISDynamicMapServiceLayer, ImageParameters,  Extent,
     PopupTemplate, FeatureLayer, arcgisUtils, graphicsUtils, geometryEngine,
     Query, QueryTask, Point, Polygon, LabelLayer, SimpleRenderer, TextSymbol,
@@ -225,10 +225,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                     (function() {
                     offlineWidget.offlineMap = new OfflineMap();
                     offlineWidget.offlineTiles = new OfflineTiles();
-                    offlineWidget.offlineTPK = new OfflineTPK();
                     offlineWidget.offlineMap.startup();
                     offlineWidget.offlineTiles.startup();
-                    offlineWidget.offlineTPK.startup();
+                   
                 })();
                     callback(true);
                     
@@ -427,8 +426,8 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
             },
           
             init: function(params, callback) {
+                var that = this;
                 var map = offlineWidget.map;
-
                 var mapService = this.mapService;
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
                 map.addLayers([tileLayer,mapService]);
@@ -444,11 +443,11 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                     intro.css('opacity', 0);
                     intro.css('visibility', 'hidden');
                     splash.remove();
+                    that.offlineMap.initEvents();
+                    callback(true);
                 }
 
-                initSplashPage();
-                this.offlineMap.initEvents();
-                callback(true);
+                
              },
          /*////////////////////////////////
         /Online Offline Methods
@@ -691,14 +690,15 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
 
             displayMap: function() {
                 var map = this.map;
-                var layer = this.mapService;
+                var _layer = {};
+                _layer.operationalLayers = this.mapService;
                 var _listener = map.on('layer-add-result', function(e) {
                     console.log("Map Service Added back to Map");
                     _listener.remove();
                     offlineWidget.offlineMap.hideLoading();
                 });
 
-                offlineWidget.toc.layers = [{layer}];
+                offlineWidget.toc.layers = _layer;
                 offlineWidget.toc.refresh();
                 map.addLayer(layer);
             },
