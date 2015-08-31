@@ -155,9 +155,9 @@ a native app look this only happens after app is saved to the desktop-->
  
 
     <!--Include a reference to offline.js which detects online/offline conditions-->
-    <script src="javascript/vendor/offline.min.js"></script>
-    <script src="javascript/utils/jquery-1.11.1.js"></script>
-    <script src="javascript/utils/bootstrap.min.js"></script>     
+    <script src="javascript/offline.min.js"></script>
+    <script src="javascript/jquery-1.11.1.js"></script>
+    <script src="javascript/bootstrap.min.js"></script>     
 
     <script>
         Offline.options = {
@@ -174,13 +174,13 @@ a native app look this only happens after app is saved to the desktop-->
 
     </script>
     
-    <script src= "javascript/3.14/init.js" data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets'}, {name:'utils', location:document.URL + 'javascript/utils'}], async: true, isDebug: true">
+    <script src="http://js.arcgis.com/3.14/" data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets'}, {name:'utils', location: document.URL + 'javascript/utils'}], async: true,isDebug:true">
     </script>
 
 
 
     <!-- Include a reference to IndexedDBShim for library to work on Safari 7.x -->
-    <script src="javascript/vendor/IndexedDBShim.js"></script>
+    <script src="javascript/IndexedDBShim.js"></script>
        <link rel="stylesheet" href="css/template-design.css">
     <script>
     require(["esri/tasks/query", "dojo/on", "dojo/parser", "esri/renderers/SimpleRenderer", "esri/dijit/BasemapGallery",
@@ -192,8 +192,8 @@ a native app look this only happens after app is saved to the desktop-->
      "esri/arcgis/OAuthInfo", "esri/IdentityManager", "esri/dijit/Legend", "esri/dijit/Popup", "esri/dijit/PopupTemplate", "dojo/dom-construct",
       "esri/symbols/SimpleFillSymbol", "esri/dijit/LayerList",
      // Custom Modules
-     "javascript/utils/bootstrapmap.min.js", "utils/appCacheManager", "widgets/OfflineWidget",
-     "javascript/dist/offline-edit-src.js", "javascript/dist/offline-tiles-advanced-src.js", "dojo/domReady!"],
+     "javascript/bootstrapmap.min.js", "utils/appCacheManager", "widgets/OfflineWidget",
+     "javascript/offline-edit-src.js", "javascript/offline-tiles-advanced-src.js", "dojo/domReady!"],
     function (Query, on, parser, SimpleRenderer, BasemapGallery, SimpleMarkerSymbol, SimpleLineSymbol, Color, PopupTemplate,
         arrayUtils, dom, query, LocateButton, ArcGISDynamicMapServiceLayer, FeatureLayer, Point, domStyle, domAttr,
         Graphic, GraphicsLayer, PictureMarkerSymbol, HomeButton, Scalebar,

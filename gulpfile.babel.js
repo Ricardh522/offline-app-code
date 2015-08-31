@@ -59,10 +59,7 @@ gulp.task('images', () =>
 // Copy all files at the root level (app)
 gulp.task('copy', () =>
   gulp.src([
-    'app/javascript/dist/*.js',
-    'app/javascript/lib/*.js',
-    'app/javascript/utils/*.js',
-    'app/javascript/vendor/*.js',
+    'app/javascript/*.js'
   ], {
     dot: false
   }).pipe(gulp.dest('dist/javascript'))
