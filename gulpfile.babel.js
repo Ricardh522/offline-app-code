@@ -126,7 +126,7 @@ gulp.task('scripts', () =>
     './app/javascript/widgets/OflineTiles.js'
     // Other scripts
   ])
-    .pipe($.concat('offlineWidget.js'))
+    // .pipe($.concat('offlineWidget.js'))
     .pipe($.uglify({preserveComments: 'some'}))
     // Output files
     .pipe(gulp.dest('dist/javascript/widgets'))

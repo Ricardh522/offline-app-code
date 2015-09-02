@@ -174,7 +174,7 @@ a native app look this only happens after app is saved to the desktop-->
 
     </script>
     
-    <script src="http://127.0.0.1/arcgis_js_api/library/3.14/3.14/init.js" data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets'}, {name:'utils', location: document.URL + 'javascript/utils'}], async: true,isDebug:true">
+    <script src="http://127.0.0.1/arcgis_js_api/library/3.14/3.14/dojo/dojo.js" data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets', main: 'offlineWidget'}, {name:'utils', location: document.URL + 'javascript/utils'}], async: true,isDebug:true">
     </script>
 
 
@@ -230,15 +230,15 @@ a native app look this only happens after app is saved to the desktop-->
             // var sslmachine = "https://52.0.185.237"
             // var httpmachine = "http://52.0.46.248:6080"
             // var sslmachine = "https://52.0.46.248:6443"
-            var httpmachine = "http://127.0.0.1:6080";
-            // var sslmachine = "https://127.0.0.1";
+            var httpmachine = "http://127.0.0.1";
+            var sslmachine = "https://127.0.0.1";
 
-            // var serverUrl = httpmachine + "/waadmin/rest/services";
-            var serverUrl = httpmachine + "/arcgis/rest/services"
+            var serverUrl = httpmachine + "/waadmin/rest/services";
+            // var serverUrl = httpmachine + "/arcgis/rest/services"
 
             // var mapName = "RSW/RSW_Utilities_MS";
             var mapName = "RSW/Utilities"
-            // var tokenUrl = httpmachine + "/waadmin/admin/generateToken"
+            var tokenUrl = sslmachine + "/waadmin/tokens/generateToken"
             
             offlineWidget = new OfflineWidget();
 
@@ -246,13 +246,15 @@ a native app look this only happens after app is saved to the desktop-->
             //   query: {
             //     username: 'siteadmin',
             //     password: 'Arora123',
-            //     handleAs: 'json'
-            //   },
-            //   method: 'POST'
-            // }).then(function(response) {
+            //     handleAs: 'json',
+            //     referer: 'http://localhost:3000',
+            //     token:"0w7GQodrLERjr5z7Nwc_Y7xAG_AoZI8Cz7eG3zt--IeS-6LLaWAEL6A74wwQfEIi",
+            //     method: 'POST'
+            // }}).then(function(response) {
             //   offlineWidget.tkn = response.token;
-            // });
 
+            // });
+           
             var mapService = new ArcGISDynamicMapServiceLayer(serverUrl + '/' + mapName + '/MapServer');
               offlineWidget.startup({
                 onlineTest: serverUrl,

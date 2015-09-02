@@ -431,7 +431,7 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                 var mapService = this.mapService;
                 var tileLayer = offlineWidget.offlineTiles.tileLayer;
                 map.addLayer(mapService);
-                // map.addLayers([tileLayer,mapService]);
+                map.addLayers([tileLayer,mapService]);
                 var splash = map.on('layer-add-result', function(e) {
                     initSplashPage();
                 });

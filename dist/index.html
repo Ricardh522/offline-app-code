@@ -117,7 +117,7 @@
         }
 
 
-    </script><script src=http://127.0.0.1/arcgis_js_api/library/3.14/3.14/init.js data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets'}, {name:'utils', location: document.URL + 'javascript/utils'}], async: true,isDebug:true">
+    </script><script src=http://127.0.0.1/arcgis_js_api/library/3.14/3.14/dojo/dojo.js data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets', main: 'offlineWidget'}, {name:'utils', location: document.URL + 'javascript/utils'}], async: true,isDebug:true">
     </script><script src=javascript/IndexedDBShim.js></script><script>
     require(["esri/tasks/query", "dojo/on", "dojo/parser", "esri/renderers/SimpleRenderer", "esri/dijit/BasemapGallery", "dojo/request",
      "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color", "esri/dijit/PopupTemplate",
@@ -174,7 +174,7 @@
 
             // var mapName = "RSW/RSW_Utilities_MS";
             var mapName = "RSW/Utilities"
-            var tokenUrl = sslmachine + "/waadmin/admin/generateToken"
+            var tokenUrl = sslmachine + "/waadmin/tokens/generateToken"
             
             offlineWidget = new OfflineWidget();
 
@@ -182,13 +182,15 @@
             //   query: {
             //     username: 'siteadmin',
             //     password: 'Arora123',
-            //     handleAs: 'json'
-            //   },
-            //   method: 'POST'
-            // }).then(function(response) {
+            //     handleAs: 'json',
+            //     referer: 'http://localhost:3000',
+            //     token:"0w7GQodrLERjr5z7Nwc_Y7xAG_AoZI8Cz7eG3zt--IeS-6LLaWAEL6A74wwQfEIi",
+            //     method: 'POST'
+            // }}).then(function(response) {
             //   offlineWidget.tkn = response.token;
-            // });
 
+            // });
+           
             var mapService = new ArcGISDynamicMapServiceLayer(serverUrl + '/' + mapName + '/MapServer');
               offlineWidget.startup({
                 onlineTest: serverUrl,
