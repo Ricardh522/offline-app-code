@@ -104,7 +104,7 @@
   
   // setInterval(function(){cache.update()}, 10000);
 
-</script><link href=css/bootstrap.min.css rel=stylesheet media=screen><link rel=stylesheet href=javascript/3.14/esri/css/esri.css><link rel=stylesheet href=css/bootstrapmap.min.css><script src=javascript/vendor/offline.min.js></script><script src=javascript/utils/jquery-1.11.1.js></script><script src=javascript/utils/bootstrap.min.js></script><script>
+</script><script src=./javascript/offline.min.js></script><script src=./javascript/jquery-1.11.1.js></script><script src=./javascript/bootstrap.min.js></script><link href=css/bootstrap.min.css rel=stylesheet media=screen><link rel=stylesheet href=http://127.0.0.1/arcgis_js_api/library/3.14/3.14/esri/css/esri.css><link rel=stylesheet href=css/template-design.css><link rel=stylesheet href=css/bootstrapmap.min.css><script>
         Offline.options = {
             checks: {
                 image: {
@@ -117,9 +117,9 @@
         }
 
 
-    </script><script src=javascript/3.14/init.js data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets'}, {name:'utils', location:document.URL + 'javascript/utils'}], async: true, isDebug: true">
-    </script><script src=javascript/vendor/IndexedDBShim.js></script><link rel=stylesheet href=css/template-design.css><script>
-    require(["esri/tasks/query", "dojo/on", "dojo/parser", "esri/renderers/SimpleRenderer", "esri/dijit/BasemapGallery",
+    </script><script src=http://127.0.0.1/arcgis_js_api/library/3.14/3.14/init.js data-dojo-config="parseOnLoad: true, packages: [{name:'widgets', location:document.URL + 'javascript/widgets'}, {name:'utils', location: document.URL + 'javascript/utils'}], async: true,isDebug:true">
+    </script><script src=javascript/IndexedDBShim.js></script><script>
+    require(["esri/tasks/query", "dojo/on", "dojo/parser", "esri/renderers/SimpleRenderer", "esri/dijit/BasemapGallery", "dojo/request",
      "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/Color", "esri/dijit/PopupTemplate",
      "dojo/_base/array", "dojo/dom", "dojo/query", "esri/dijit/LocateButton", "esri/layers/ArcGISDynamicMapServiceLayer",
       "esri/layers/FeatureLayer", "esri/geometry/Point", "dojo/dom-style", "dojo/dom-attr",
@@ -128,9 +128,9 @@
      "esri/arcgis/OAuthInfo", "esri/IdentityManager", "esri/dijit/Legend", "esri/dijit/Popup", "esri/dijit/PopupTemplate", "dojo/dom-construct",
       "esri/symbols/SimpleFillSymbol", "esri/dijit/LayerList",
      // Custom Modules
-     "javascript/utils/bootstrapmap.min.js", "utils/appCacheManager", "widgets/OfflineWidget",
-     "javascript/dist/offline-edit-src.js", "javascript/dist/offline-tiles-advanced-src.js", "dojo/domReady!"],
-    function (Query, on, parser, SimpleRenderer, BasemapGallery, SimpleMarkerSymbol, SimpleLineSymbol, Color, PopupTemplate,
+     "javascript/bootstrapmap.min.js", "utils/appCacheManager", "widgets/OfflineWidget",
+     "javascript/offline-tiles-advanced-src.js", "dojo/domReady!"],
+    function (Query, on, parser, SimpleRenderer, BasemapGallery, request,SimpleMarkerSymbol, SimpleLineSymbol, Color, PopupTemplate,
         arrayUtils, dom, query, LocateButton, ArcGISDynamicMapServiceLayer, FeatureLayer, Point, domStyle, domAttr,
         Graphic, GraphicsLayer, PictureMarkerSymbol, HomeButton, Scalebar,
         GeoRSSLayer, Extent, SpatialReference, ImageParameters, OAuthInfo, esriId, Legend, Popup,  PopupTemplate, domConstruct,SimpleFillSymbol, LayerList, BootstrapMap, AppCacheManager, OfflineWidget) {
@@ -162,23 +162,35 @@
 
             
            
-            //var machine = "http://192.168.0.8"
-            // var machine = "http://192.168.42.164"
-            var machine = "http://127.0.0.1"
-            // var machine = "http://192.168.1.134";
-            // var machine = "http://52.0.185.237";
-            // var machine = "http://52.0.46.248:6080"
-            var serverUrl = machine + "/waadmin/rest/services";
-            
-            // var serverUrl = machine + "/arcgis/rest/services"
-            // var mapName = "RSW/RSW_Utilities_MS";
-            // var mapName = "Utilities";
-            var mapName = "RSW/Utilities"
+           // var httpmachine = "http://52.0.185.237"
+            // var sslmachine = "https://52.0.185.237"
+            // var httpmachine = "http://52.0.46.248:6080"
+            // var sslmachine = "https://52.0.46.248:6443"
+            var httpmachine = "http://127.0.0.1";
+            var sslmachine = "https://127.0.0.1";
 
-            var mapService = new ArcGISDynamicMapServiceLayer(serverUrl + '/' + mapName + '/MapServer');
+            var serverUrl = httpmachine + "/waadmin/rest/services";
+            // var serverUrl = httpmachine + "/arcgis/rest/services"
+
+            // var mapName = "RSW/RSW_Utilities_MS";
+            var mapName = "RSW/Utilities"
+            var tokenUrl = sslmachine + "/waadmin/admin/generateToken"
+            
             offlineWidget = new OfflineWidget();
 
-            offlineWidget.startup({
+            // request(tokenUrl, {
+            //   query: {
+            //     username: 'siteadmin',
+            //     password: 'Arora123',
+            //     handleAs: 'json'
+            //   },
+            //   method: 'POST'
+            // }).then(function(response) {
+            //   offlineWidget.tkn = response.token;
+            // });
+
+            var mapService = new ArcGISDynamicMapServiceLayer(serverUrl + '/' + mapName + '/MapServer');
+              offlineWidget.startup({
                 onlineTest: serverUrl,
                 mapService: mapService}, function(e) {
               console.log("offlineWidget was started");
@@ -197,7 +209,7 @@
                     xmax: -81.727679968347,
                     ymax: 26.5551345246508,
                     spatialReference: {
-                        wkid: 102659
+                        wkid: 102100
                     }
                 });
                  centerPnt = mapExtent.getCenter();

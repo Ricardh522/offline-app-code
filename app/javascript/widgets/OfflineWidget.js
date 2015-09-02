@@ -227,9 +227,9 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
                     offlineWidget.offlineTiles = new OfflineTiles();
                     offlineWidget.offlineMap.startup();
                     offlineWidget.offlineTiles.startup();
-                   
+                     callback(true);
                 })();
-                    callback(true);
+                    
                     
             },
 
@@ -427,12 +427,14 @@ define(["dojo/_base/declare","dojo/_base/array","dojo/parser", "dojo/ready",
           
             init: function(params, callback) {
                 var that = this;
-                var map = offlineWidget.map;
+                var map = this.map;
                 var mapService = this.mapService;
-                // var tileLayer = offlineWidget.offlineTiles.tileLayer;
+                var tileLayer = offlineWidget.offlineTiles.tileLayer;
                 map.addLayer(mapService);
-                // map.addLayers([mapService]);
-                var splash = map.on('layer-add-result', initSplashPage);
+                // map.addLayers([tileLayer,mapService]);
+                var splash = map.on('layer-add-result', function(e) {
+                    initSplashPage();
+                });
 
                 function initSplashPage() {
                     var intro = $("#splashPage");

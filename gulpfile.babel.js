@@ -57,14 +57,24 @@ gulp.task('images', () =>
 );
 
 // Copy all files at the root level (app)
-gulp.task('copy', () =>
+gulp.task('copyroot', () =>
   gulp.src([
     'app/javascript/*.js'
   ], {
     dot: false
   }).pipe(gulp.dest('dist/javascript'))
-    .pipe($.size({title: 'copy'}))
+    .pipe($.size({title: 'copyroot'}))
 );
+
+gulp.task('copyUtils', () =>
+  gulp.src([
+    'app/javascript/utils/*.js'
+  ], {
+    dot: false
+  }).pipe(gulp.dest('dist/javascript/utils'))
+    .pipe($.size({title: 'copyUtils'}))
+);
+
 
 // Copy web fonts to dist
 gulp.task('fonts', () =>
@@ -120,7 +130,7 @@ gulp.task('scripts', () =>
     .pipe($.uglify({preserveComments: 'some'}))
     // Output files
     .pipe(gulp.dest('dist/javascript/widgets'))
-    .pipe($.size({title: 'offlineWidget'}))
+    .pipe($.size({title: 'scripts'}))
 );
 
 // Scan your HTML for assets & optimize them
@@ -196,7 +206,7 @@ gulp.task('serve:dist', ['default'], () =>
 gulp.task('default', ['clean'], cb =>
   runSequence(
     'styles',
-    ['jshint', 'html', 'scripts', 'images', 'fonts', 'copy'],
+    ['jshint', 'html', 'scripts', 'images', 'fonts', 'copyroot', 'copyUtils'],
     'generate-service-worker',
     cb
   )
